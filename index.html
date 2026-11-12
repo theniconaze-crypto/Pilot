@@ -523,7 +523,7 @@ function seedData(){
   const p1 = uid(), p2 = uid();
   const ph = (over)=> Object.assign({
     id:uid(), projectId:p1, responsible:'A. Morel', budgetPlanned:10000, budgetActual:0,
-    priority:'Moyenne', milestone:false, deps:[], progress:0, notes:''
+    priority:'Moyenne', milestone:false, critical:false, deps:[], progress:0, notes:''
   }, over);
   return {
     projects:[
@@ -656,6 +656,7 @@ async function loadState(){
       if(!state.risks) state.risks=[];
       if(!state.projects) state.projects=[];
       if(!state.phases) state.phases=[];
+      state.phases.forEach(p=>{ if(typeof p.critical!=='boolean') p.critical=false; });
       return;
     }
   }catch(e){ /* no data yet, seed below */ }
@@ -778,10 +779,16 @@ function computeCriticalPhaseIds(projectId){
   });
   return critical;
 }
+/* "Critique" est désormais un choix manuel (case à cocher dans la fiche de la phase).
+   L'ancien calcul automatique (marge nulle) rendait critique toute phase sans successeur. */
 function allCriticalIds(){
-  const set = new Set();
-  state.projects.forEach(pr=> computeCriticalPhaseIds(pr.id).forEach(id=>set.add(id)));
-  return set;
+  return new Set(state.phases.filter(p=>p.critical).map(p=>p.id));
+}
+/* Une phase programmée aujourd'hui (en cours, non terminée) est prioritaire. */
+function isActiveToday(p){
+  if(p.progress>=100) return false;
+  const t = fmtDate(new Date());
+  return p.start<=t && p.end>=t;
 }
 
 /* Single source of truth for "risque critique": score >= 15 AND not closed.
@@ -820,9 +827,7 @@ function computeKPIs(phases){
     return Math.round(ratio*totalD);
   });
   const avg_delay = lateDelays.length? Math.round(lateDelays.reduce((a,b)=>a+b,0)/lateDelays.length) : 0;
-  const critIds = new Set();
-  const projIds = [...new Set(phases.map(p=>p.projectId))];
-  projIds.forEach(pid=> computeCriticalPhaseIds(pid).forEach(id=>{ if(phases.find(p=>p.id===id)) critIds.add(id); }));
+  const critIds = new Set(phases.filter(p=>p.critical).map(p=>p.id));
   const risksAll = state.risks.filter(r=> phases.some(p=>p.id===r.phaseId));
   const risks_open = risksAll.filter(r=>r.status==='Ouvert').length;
   const risks_critical = risksAll.filter(isRiskCritical).length;
@@ -978,7 +983,8 @@ function buildGanttSVG(phases, opts){
   let rowsSvg = '';
   phases.forEach((p,i)=>{
     const y = headH + i*rowH;
-    const rowBg = i%2===0 ? (forPrint?'#ffffff':'transparent') : (forPrint?'#f7f9fb':'rgba(255,255,255,.012)');
+    let rowBg = i%2===0 ? (forPrint?'#ffffff':'transparent') : (forPrint?'#f7f9fb':'rgba(255,255,255,.012)');
+    if(isActiveToday(p)) rowBg = forPrint?'#fff8e6':'rgba(62,207,142,.07)';
     rowsSvg += `<rect x="0" y="${y}" width="${width}" height="${rowH}" fill="${rowBg}"/>`;
     const proj = projectById(p.projectId);
     const isCrit = critIds.has(p.id);
@@ -1107,7 +1113,7 @@ function renderPhasesTab(){
     phases = phases.filter(p=>p.name.toLowerCase().includes(q) || (p.responsible||'').toLowerCase().includes(q));
   }
   if(phaseFilters.status!=='all') phases = phases.filter(p=>getPhaseStatus(p)===phaseFilters.status);
-  phases = phases.slice().sort((a,b)=>parseDate(a.start)-parseDate(b.start));
+  phases = phases.slice().sort((a,b)=> (isActiveToday(b)-isActiveToday(a)) || (parseDate(a.start)-parseDate(b.start)));
 
   const rowsHtml = phases.map(p=>{
     const proj = projectById(p.projectId);
@@ -1116,7 +1122,7 @@ function renderPhasesTab(){
     const isCrit = critIds.has(p.id);
     return `<tr class="row-clickable" data-open="${p.id}">
       <td><span class="proj-dot" style="display:inline-block;background:${proj?proj.color:'#888'}"></span></td>
-      <td><strong>${escapeHtml(p.name)}</strong>${p.milestone?' <span class="badge" style="background:rgba(77,159,255,.15);color:#8fc4ff">JALON</span>':''}${isCrit?` <span class="crit-tag-simple">⚡ Critique</span>`:''}</td>
+      <td><strong>${escapeHtml(p.name)}</strong>${p.milestone?' <span class="badge" style="background:rgba(77,159,255,.15);color:#8fc4ff">JALON</span>':''}${isCrit?` <span class="crit-tag-simple">⚡ Critique</span>`:''}${isActiveToday(p)?' <span class="badge" style="background:var(--green-soft);color:#7fe8b8">AUJOURD\'HUI</span>':''}</td>
       <td style="font-family:var(--font-mono);font-size:12px;color:var(--text-2)">${fmtShort(p.start)} → ${fmtShort(p.end)}</td>
       <td><span class="resp-avatar">${initials(p.responsible)}</span>${escapeHtml(p.responsible||'—')}</td>
       <td><div style="display:flex;align-items:center;gap:8px"><div class="prog-bar-mini"><div style="width:${clamp(p.progress,0,100)}%"></div></div><span style="font-family:var(--font-mono);font-size:12px">${Math.round(p.progress)}%</span></div></td>
@@ -1370,7 +1376,7 @@ function openPhaseModal(phaseId){
   const p = editing ? phaseById(phaseId) : {
     id:null, projectId: state.ui.selectedProject!=='all'?state.ui.selectedProject:(state.projects[0]?state.projects[0].id:''),
     name:'', start:fmtDate(new Date()), end:fmtDate(addDays(new Date(),10)), progress:0,
-    responsible:'', budgetPlanned:0, budgetActual:0, priority:'Moyenne', milestone:false, deps:[], notes:''
+    responsible:'', budgetPlanned:0, budgetActual:0, priority:'Moyenne', milestone:false, critical:false, deps:[], notes:''
   };
   if(!state.projects.length){ showToast('Créez d\'abord un projet'); return; }
   const otherPhases = state.phases.filter(ph=>ph.projectId===p.projectId && ph.id!==p.id);
@@ -1394,6 +1400,7 @@ function openPhaseModal(phaseId){
         </div>
         <div class="field"><label>Budget prévu (€)</label><input type="number" id="f_budgetp" value="${p.budgetPlanned}"></div>
         <div class="field"><label>Budget réel consommé (€)</label><input type="number" id="f_budgeta" value="${p.budgetActual}"></div>
+        <div class="field full checkbox-row"><input type="checkbox" id="f_critical" ${p.critical?'checked':''}><label style="text-transform:none;font-weight:500;color:var(--text-1);font-size:13px">Phase critique (marquée sur le Gantt et comptée dans les KPI)</label></div>
         <div class="field full checkbox-row"><input type="checkbox" id="f_milestone" ${p.milestone?'checked':''}><label style="text-transform:none;font-weight:500;color:var(--text-1);font-size:13px">Cette phase est un jalon (date unique)</label></div>
         <div class="field full">
           <label>Dépendances (phases prédécesseurs dans le même projet)</label>
@@ -1453,6 +1460,7 @@ function openPhaseModal(phaseId){
       budgetPlanned: Number(document.getElementById('f_budgetp').value)||0,
       budgetActual: Number(document.getElementById('f_budgeta').value)||0,
       milestone: isMilestone,
+      critical: document.getElementById('f_critical').checked,
       deps: [...currentDeps],
       notes: document.getElementById('f_notes').value,
     };
