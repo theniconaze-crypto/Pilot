@@ -429,6 +429,56 @@ table.data-table tr:last-child td{border-bottom:none;}
   #topbar h1{font-size:17px;}
   .kpi-grid{grid-template-columns:1fr 1fr;}
 }
+
+/* ---------- DOCUMENTS & FICHE PROJET ---------- */
+.proj-item .edit-proj{opacity:0;flex:none;background:none;border:none;color:var(--text-3);padding:2px;border-radius:4px;}
+.proj-item:hover .edit-proj{opacity:1;}
+.proj-item .edit-proj:hover{color:var(--accent);background:var(--accent-soft);}
+@media (hover:none){ .proj-item .edit-proj{opacity:.55;} }
+
+.proj-banner{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;background:var(--bg-panel);border:1px solid var(--border-soft);border-left:3px solid var(--pc,var(--accent));border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;}
+.proj-banner .pb-main{flex:1 1 320px;min-width:0;}
+.proj-banner .pb-title{font-family:var(--font-display);font-size:19px;font-weight:600;letter-spacing:.01em;}
+.proj-banner .pb-desc{color:var(--text-2);font-size:13px;margin-top:4px;white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;}
+.proj-banner .pb-desc.empty{color:var(--text-3);font-style:italic;}
+.proj-banner .pb-side{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--text-2);min-width:190px;max-width:100%;overflow-wrap:anywhere;}
+.proj-banner .pb-side .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:600;}
+.proj-banner .pb-side a{color:var(--accent);text-decoration:none;}
+.proj-banner .pb-side a:hover{text-decoration:underline;}
+.proj-banner .pb-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+.doc-list{display:flex;flex-direction:column;gap:8px;}
+.doc-row{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg-panel-2);border:1px solid var(--border);border-radius:var(--radius-sm);}
+.doc-ico{flex:none;width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;font-weight:600;background:var(--bg-raised);color:var(--text-2);}
+.doc-ico.pdf{background:var(--red-soft);color:var(--red);}
+.doc-ico.xls{background:var(--green-soft);color:var(--green);}
+.doc-ico.doc{background:var(--accent-soft);color:var(--accent);}
+.doc-ico.ppt{background:var(--amber-soft);color:var(--amber);}
+.doc-ico.img{background:rgba(157,123,255,.14);color:var(--violet);}
+.doc-ico.cad{background:rgba(94,200,248,.14);color:#5ec8f8;}
+.doc-ico.link{background:rgba(55,201,193,.14);color:var(--cyan);}
+.doc-main{flex:1;min-width:0;}
+.doc-name{display:block;font-weight:600;font-size:13.5px;color:var(--text-1);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+a.doc-name:hover{color:var(--accent);}
+.doc-meta{font-size:11.5px;color:var(--text-3);margin-top:3px;display:flex;flex-wrap:wrap;gap:3px 12px;align-items:center;}
+.doc-tag{padding:1px 8px;border-radius:20px;background:var(--bg-raised);font-size:10.5px;color:var(--text-2);}
+.doc-actions{display:flex;gap:2px;flex:none;}
+.doc-act{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:none;background:none;color:var(--text-3);border-radius:6px;text-decoration:none;}
+.doc-act:hover{background:var(--bg-raised);color:var(--text-1);}
+.doc-act.danger:hover{background:var(--red-soft);color:var(--red);}
+.doc-group-head{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:16px;font-weight:600;margin:20px 0 8px;}
+.doc-group-head:first-child{margin-top:12px;}
+.doc-group-head .n{font-family:var(--font-mono);font-size:11px;color:var(--text-3);font-weight:500;}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;align-self:flex-start;}
+.seg button{padding:7px 16px;border:none;background:transparent;color:var(--text-2);font-size:12.5px;font-weight:500;}
+.seg button.on{background:var(--accent-soft);color:var(--accent);}
+.upload-progress{height:5px;background:var(--bg-raised);border-radius:4px;overflow:hidden;margin-top:8px;}
+.upload-progress>div{height:100%;width:0;background:var(--accent);transition:width .15s;}
+#modalRoot2 .modal-backdrop{z-index:110;}
+@media (max-width:900px){
+  .doc-act{width:40px;height:40px;}
+  .proj-banner .pb-actions .btn{flex:1 1 auto;justify-content:center;}
+}
 </style>
 </head>
 <body>
@@ -457,6 +507,11 @@ table.data-table tr:last-child td{border-bottom:none;}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
       Risques
       <span class="count" id="countRisks">0</span>
+    </button>
+    <button class="nav-btn" data-tab="docs" id="navDocs">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+      Documents
+      <span class="count" id="countDocs">0</span>
     </button>
     <button class="nav-btn" data-tab="kpi" id="navKpi">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 15l4-6 3 3 5-7"/></svg>
@@ -515,6 +570,7 @@ table.data-table tr:last-child td{border-bottom:none;}
 
 <div id="toast"></div>
 <div id="modalRoot"></div>
+<div id="modalRoot2"></div>
 <div id="printTarget"></div>
 <div id="authScreen">
   <div class="auth-card">
@@ -652,13 +708,22 @@ function loadUi(){
 function saveUi(){ try{ window.localStorage.setItem(uiKey(), JSON.stringify(state.ui)); }catch(e){} }
 
 /* Données partagées (projets, phases, risques) : un document Firestore pilot/data. */
-function dataPayload(){ return JSON.stringify({projects:state.projects, phases:state.phases, risks:state.risks}); }
+function dataPayload(){ return JSON.stringify({projects:state.projects, phases:state.phases, risks:state.risks, docs:state.docs}); }
 function normalizeData(d){
   return {
     projects: Array.isArray(d.projects)?d.projects:[],
     phases: (Array.isArray(d.phases)?d.phases:[]).map(p=> typeof p.critical==='boolean' ? p : Object.assign({}, p, {critical:false})),
     risks: Array.isArray(d.risks)?d.risks:[],
+    docs: normalizeDocs(d.docs),
   };
+}
+function normalizeDocs(a){
+  return (Array.isArray(a)?a:[]).filter(d=>d && d.id && d.projectId).map(d=>({
+    id:d.id, projectId:d.projectId, phaseId:d.phaseId||null,
+    name:String(d.name||'Document'), kind:d.kind==='link'?'link':'file',
+    url:String(d.url||''), path:d.path||'', size:Number(d.size)||0, mime:d.mime||'',
+    addedAt:d.addedAt||'', addedBy:d.addedBy||''
+  }));
 }
 function setSaveState(kind, text){
   const dot = document.getElementById('saveDot'), txt = document.getElementById('saveText');
@@ -689,7 +754,7 @@ function applyRemoteData(r){
   if(!state || !currentUser) return;
   if(!r.exists){
     if(r.fromCache) return;
-    let initial = {projects:[], phases:[], risks:[]};
+    let initial = {projects:[], phases:[], risks:[], docs:[]};
     if(canEdit()){
       // Première utilisation : on reprend d'éventuelles données de l'ancienne version locale.
       try{
@@ -697,7 +762,7 @@ function applyRemoteData(r){
         if(v){ const d = JSON.parse(v); if(d && d.projects && d.phases){ initial = normalizeData(d); showToast('Données locales existantes migrées vers le cloud'); } }
       }catch(e){}
     }
-    state.projects = initial.projects; state.phases = initial.phases; state.risks = initial.risks;
+    state.projects = initial.projects; state.phases = initial.phases; state.risks = initial.risks; state.docs = initial.docs;
     lastPayload = null;
     persist();
     renderAll();
@@ -707,7 +772,7 @@ function applyRemoteData(r){
   if(r.payload===lastPayload) return;   // écho de notre écriture confirmée
   try{
     const d = normalizeData(JSON.parse(r.payload));
-    state.projects = d.projects; state.phases = d.phases; state.risks = d.risks;
+    state.projects = d.projects; state.phases = d.phases; state.risks = d.risks; state.docs = d.docs;
     lastPayload = r.payload;
   }catch(e){ console.error('Données distantes illisibles', e); return; }
   setSaveState('ok','Synchronisé');
@@ -790,7 +855,7 @@ function applyRoleUi(){
 }
 
 async function enterApp(){
-  state = {projects:[], phases:[], risks:[], ui:loadUi()};
+  state = {projects:[], phases:[], risks:[], docs:[], ui:loadUi()};
   lastPayload = null;
   hideAuthScreen();
   applyRoleUi();
@@ -973,7 +1038,7 @@ function makeModalReadOnly(title){
   const root = document.getElementById('modalRoot');
   root.querySelectorAll('input,select,textarea').forEach(el=>el.disabled=true);
   root.querySelectorAll('.chip-opt').forEach(el=>el.style.pointerEvents='none');
-  root.querySelectorAll('#btnSavePhase,#btnDeletePhase,#btnSaveRisk,#btnDeleteRisk,#btnCreateProject').forEach(el=>el.classList.add('hidden'));
+  root.querySelectorAll('#btnSavePhase,#btnDeletePhase,#btnSaveRisk,#btnDeleteRisk,#btnCreateProject,#btnSaveProject').forEach(el=>el.classList.add('hidden'));
   const h = root.querySelector('.modal-head h3'); if(h && title) h.textContent = title;
   root.querySelectorAll('.modal-foot .modal-close').forEach(b=>b.textContent='Fermer');
 }
@@ -1013,9 +1078,9 @@ function pdfSafeText(s){
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
 function initials(name){ if(!name) return '?'; return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function showToast(msg){
+function showToast(msg, ms){
   const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-  clearTimeout(showToast._tm); showToast._tm=setTimeout(()=>t.classList.remove('show'),2200);
+  clearTimeout(showToast._tm); showToast._tm=setTimeout(()=>t.classList.remove('show'),ms||2200);
 }
 function projectById(id){ return state.projects.find(p=>p.id===id); }
 function phaseById(id){ return state.phases.find(p=>p.id===id); }
@@ -1148,17 +1213,27 @@ function renderSidebar(){
     rows.push(`<div class="proj-item ${state.ui.selectedProject===p.id?'active':''}" data-proj="${p.id}">
       <span class="proj-dot" style="background:${p.color}"></span>
       <span class="pname">${escapeHtml(p.name)}</span>
+      <button class="edit-proj" data-editproj="${p.id}" title="Modifier le projet (nom, descriptif, demandeur)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      </button>
       <button class="del-proj" data-delproj="${p.id}" title="Supprimer le projet">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
       </button></div>`);
   });
   list.innerHTML = rows.join('');
-  if(!canEdit()) list.querySelectorAll('.del-proj').forEach(b=>b.remove());
+  if(!canEdit()) list.querySelectorAll('.del-proj,.edit-proj').forEach(b=>b.remove());
   list.querySelectorAll('.proj-item').forEach(el=>{
     el.addEventListener('click',(e)=>{
-      if(e.target.closest('.del-proj')) return;
+      if(e.target.closest('.del-proj,.edit-proj')) return;
       state.ui.selectedProject = el.dataset.proj;
       persist(); renderAll(); closeSidebar();
+    });
+  });
+  list.querySelectorAll('.edit-proj').forEach(el=>{
+    el.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      closeSidebar();
+      openProjectModal(el.dataset.editproj);
     });
   });
   list.querySelectorAll('.del-proj').forEach(el=>{
@@ -1166,10 +1241,13 @@ function renderSidebar(){
       e.stopPropagation();
       const pid = el.dataset.delproj;
       const proj = projectById(pid);
-      if(!confirm(`Supprimer le projet "${proj.name}" et toutes ses phases / risques associés ?`)) return;
+      const nProjDocs = state.docs.filter(d=>d.projectId===pid).length;
+      if(!confirm(`Supprimer le projet "${proj.name}" et toutes ses phases / risques associés${nProjDocs?` ainsi que ses ${nProjDocs} document(s)`:''} ?`)) return;
       const phaseIds = state.phases.filter(p=>p.projectId===pid).map(p=>p.id);
       state.phases = state.phases.filter(p=>p.projectId!==pid);
       state.risks = state.risks.filter(r=>!phaseIds.includes(r.phaseId));
+      state.docs.filter(d=>d.projectId===pid && d.path).forEach(d=>{ window.PilotFB.deleteFile(d.path).catch(e=>console.warn('Suppression fichier', e)); });
+      state.docs = state.docs.filter(d=>d.projectId!==pid);
       state.projects = state.projects.filter(p=>p.id!==pid);
       if(state.ui.selectedProject===pid) state.ui.selectedProject='all';
       persist(); renderAll();
@@ -1177,6 +1255,7 @@ function renderSidebar(){
     });
   });
   document.getElementById('countPhases').textContent = visiblePhases().length;
+  document.getElementById('countDocs').textContent = state.docs.filter(d=>state.ui.selectedProject==='all' || d.projectId===state.ui.selectedProject).length;
   document.getElementById('countRisks').textContent = state.risks.filter(r=>visiblePhases().some(p=>p.id===r.phaseId)).length;
 }
 
@@ -1194,7 +1273,7 @@ function renderAlerts(){
   if(overBudget.length) chips.push(`<div class="alert-chip budget">€ ${overBudget.length} phase(s) en dépassement budgétaire (+10%)</div>`);
   if(criticalRisks.length) chips.push(`<div class="alert-chip risk">☢ ${criticalRisks.length} risque(s) critique(s) actif(s)</div>`);
   if(!chips.length) chips.push(`<div class="alert-chip ok">✓ Aucune alerte — le portefeuille est sous contrôle</div>`);
-  return `<div class="alerts-bar">${chips.join('')}</div>`;
+  return renderProjectBanner() + `<div class="alerts-bar">${chips.join('')}</div>`;
 }
 
 /* ---------------------------- TOP BAR ---------------------------- */
@@ -1667,6 +1746,329 @@ function openModal(html){
 }
 function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
 
+
+/* ---------------------------- BANDEAU PROJET ---------------------------- */
+function renderProjectBanner(){
+  const sel = state.ui.selectedProject;
+  if(sel==='all') return '';
+  const p = projectById(sel);
+  if(!p) return '';
+  const nDocs = state.docs.filter(d=>d.projectId===p.id).length;
+  const desc = (p.description||'').trim();
+  const who = [];
+  if(p.reqName) who.push(`<strong style="color:var(--text-1)">${escapeHtml(p.reqName)}</strong>${p.reqOrg?` <span style="color:var(--text-3)">· ${escapeHtml(p.reqOrg)}</span>`:''}`);
+  else if(p.reqOrg) who.push(escapeHtml(p.reqOrg));
+  const contacts = [];
+  const mail = String(p.reqEmail||'').trim();
+  if(/^[^\s@<>"']+@[^\s@<>"']+$/.test(mail)) contacts.push(`<a href="mailto:${escapeHtml(mail)}">${escapeHtml(mail)}</a>`);
+  const tel = String(p.reqPhone||'').trim();
+  if(tel) contacts.push(`<a href="tel:${escapeHtml(tel.replace(/[^\d+]/g,''))}">${escapeHtml(tel)}</a>`);
+  const side = (who.length||contacts.length)
+    ? `<div class="lbl">Demandeur</div>${who.length?`<div>${who.join('')}</div>`:''}${contacts.length?`<div>${contacts.join(' · ')}</div>`:''}`
+    : `<div class="lbl">Demandeur</div><div style="color:var(--text-3)">Non renseigné</div>`;
+  return `<div class="proj-banner" style="--pc:${p.color}">
+    <div class="pb-main">
+      <div class="pb-title">${escapeHtml(p.name)}</div>
+      <div class="pb-desc ${desc?'':'empty'}">${desc?escapeHtml(desc):(canEdit()?'Aucun descriptif — ajoutez un peu de contexte dans la fiche projet.':'Aucun descriptif.')}</div>
+    </div>
+    <div class="pb-side">${side}</div>
+    <div class="pb-actions">
+      <button class="btn btn-outline btn-sm" data-pbaction="edit">${canEdit()?'Modifier la fiche':'Fiche projet'}</button>
+      <button class="btn btn-outline btn-sm" data-pbaction="docs">Documents (${nDocs})</button>
+    </div>
+  </div>`;
+}
+
+/* ---------------------------- DOCUMENTS ---------------------------- */
+const MAX_DOC_BYTES = 25*1024*1024;
+let docFilters = {search:'', scope:'all'};
+
+/* Seconde couche de modale : permet d'ajouter un document depuis la fenêtre d'une phase ou d'un projet. */
+function openModal2(html){
+  const root = document.getElementById('modalRoot2');
+  root.innerHTML = `<div class="modal-backdrop" id="modalBackdrop2">${html}</div>`;
+  document.getElementById('modalBackdrop2').addEventListener('mousedown', (e)=>{ if(e.target.id==='modalBackdrop2') closeModal2(); });
+  root.querySelectorAll('.modal-close').forEach(b=>b.addEventListener('click', closeModal2));
+}
+function closeModal2(){ document.getElementById('modalRoot2').innerHTML=''; }
+
+function safeUrl(u){ try{ const x=new URL(String(u||'').trim()); return (x.protocol==='http:'||x.protocol==='https:')?x.href:''; }catch(e){ return ''; } }
+function normalizeUrlInput(s){ s=String(s||'').trim(); if(!s) return ''; if(!/^[a-z][a-z0-9+.-]*:/i.test(s)) s='https://'+s; return safeUrl(s); }
+function fmtSize(b){ if(!b) return ''; if(b<1024) return b+' o'; if(b<1048576) return Math.round(b/1024)+' Ko'; return (b/1048576).toFixed(b<10485760?1:0)+' Mo'; }
+function safeFileName(n){ return (String(n||'fichier').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w.\-]+/g,'_').slice(-80))||'fichier'; }
+function fmtDocDate(iso){ const dt=new Date(iso); return isNaN(dt)?'':fmtHuman(fmtDate(dt)); }
+function sortDocs(list){ return list.slice().sort((a,b)=>String(b.addedAt||'').localeCompare(String(a.addedAt||''))); }
+function docIconInfo(d){
+  if(d.kind==='link') return {cls:'link', txt:'LIEN'};
+  const m = /\.([a-z0-9]{1,5})$/i.exec(d.path||'') || /\.([a-z0-9]{1,5})$/i.exec(d.name||'');
+  const ext = m ? m[1].toLowerCase() : '';
+  const map = {pdf:'pdf', xls:'xls', xlsx:'xls', xlsm:'xls', csv:'xls', doc:'doc', docx:'doc', odt:'doc', txt:'doc', ppt:'ppt', pptx:'ppt',
+               png:'img', jpg:'img', jpeg:'img', gif:'img', webp:'img', svg:'img', dwg:'cad', dxf:'cad'};
+  return {cls: map[ext]||'', txt: (ext||'FICHIER').slice(0,4).toUpperCase()};
+}
+function storageErrorMessage(e){
+  const c = (e && e.code) || '';
+  if(c==='storage/unauthorized') return "Envoi refusé : vérifiez les règles de Firebase Storage.";
+  if(c==='storage/unauthenticated') return 'Session expirée : reconnectez-vous.';
+  if(c==='storage/quota-exceeded') return 'Quota Firebase Storage dépassé.';
+  if(c==='storage/retry-limit-exceeded' || c==='storage/network-request-failed') return 'Réseau indisponible : envoi interrompu.';
+  if(c==='storage/bucket-not-found' || c==='storage/project-not-found') return "Firebase Storage n'est pas activé pour ce projet.";
+  return "Échec de l'envoi du document.";
+}
+
+function docRowHtml(d, opts){
+  opts = opts||{};
+  const ic = docIconInfo(d);
+  const url = safeUrl(d.url);
+  const ph = d.phaseId ? phaseById(d.phaseId) : null;
+  const meta = [];
+  if(opts.showProject){ const pr=projectById(d.projectId); if(pr) meta.push(`<span><span class="proj-dot" style="display:inline-block;background:${pr.color};margin-right:5px"></span>${escapeHtml(pr.name)}</span>`); }
+  if(opts.showScope!==false) meta.push(ph ? `<span class="doc-tag">Phase · ${escapeHtml(ph.name)}</span>` : `<span class="doc-tag">Projet</span>`);
+  if(d.kind==='file' && d.size) meta.push(`<span>${fmtSize(d.size)}</span>`);
+  const dt = fmtDocDate(d.addedAt);
+  if(dt) meta.push(`<span>${dt}${d.addedBy?' · '+escapeHtml(d.addedBy):''}</span>`);
+  const nameHtml = url
+    ? `<a class="doc-name" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(d.name)}">${escapeHtml(d.name)}</a>`
+    : `<span class="doc-name">${escapeHtml(d.name)}</span>`;
+  const openIco = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/></svg>`;
+  const editIco = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
+  const delIco = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>`;
+  return `<div class="doc-row">
+    <div class="doc-ico ${ic.cls}">${escapeHtml(ic.txt)}</div>
+    <div class="doc-main">${nameHtml}<div class="doc-meta">${meta.join('')}</div></div>
+    <div class="doc-actions">
+      ${url?`<a class="doc-act" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="Ouvrir">${openIco}</a>`:''}
+      ${canEdit()?`<button type="button" class="doc-act" data-editdoc="${d.id}" title="Modifier / réassocier">${editIco}</button><button type="button" class="doc-act danger" data-deldoc="${d.id}" title="Supprimer">${delIco}</button>`:''}
+    </div>
+  </div>`;
+}
+
+function deleteDoc(id){
+  if(!canEdit()) return false;
+  const d = state.docs.find(x=>x.id===id);
+  if(!d) return false;
+  if(!confirm(`Supprimer « ${d.name} » ?${d.kind==='file'?' Le fichier sera aussi supprimé du stockage.':''}`)) return false;
+  state.docs = state.docs.filter(x=>x.id!==id);
+  if(d.path) window.PilotFB.deleteFile(d.path).catch(e=>console.warn('Suppression fichier', e));
+  persist();
+  showToast('Document supprimé');
+  return true;
+}
+
+function bindDocActions(root, onChange){
+  root.querySelectorAll('[data-deldoc]').forEach(b=>b.addEventListener('click', ()=>{
+    if(deleteDoc(b.dataset.deldoc)){ if(onChange) onChange(); renderAll(); }
+  }));
+  root.querySelectorAll('[data-editdoc]').forEach(b=>b.addEventListener('click', ()=> openDocModal({docId:b.dataset.editdoc, onDone:onChange})));
+}
+
+/* Bloc "Documents" réutilisé dans la fenêtre d'une phase (phaseId fourni) et dans la fiche projet (tous les documents du projet). */
+function mountDocsSection(el, projectId, phaseId){
+  const render = ()=>{
+    const list = sortDocs(phaseId ? state.docs.filter(d=>d.phaseId===phaseId) : state.docs.filter(d=>d.projectId===projectId));
+    el.innerHTML = `${list.length
+        ? `<div class="doc-list">${list.map(d=>docRowHtml(d,{showScope:!phaseId})).join('')}</div>`
+        : `<div class="hint">Aucun document ${phaseId?'pour cette phase':'pour ce projet'}.</div>`}
+      ${canEdit()?`<button type="button" class="btn btn-outline btn-sm" data-adddoc style="margin-top:10px">＋ Ajouter un document</button>`:''}`;
+    bindDocActions(el, render);
+    const add = el.querySelector('[data-adddoc]');
+    if(add) add.addEventListener('click', ()=> openDocModal({projectId, phaseId:phaseId||null, onDone:render}));
+  };
+  render();
+}
+
+function openDocModal(opts){
+  opts = opts||{};
+  if(!canEdit()){ showToast('Action réservée aux chefs de projet'); return; }
+  const editing = !!opts.docId;
+  const cur = editing ? state.docs.find(d=>d.id===opts.docId) : null;
+  if(editing && !cur){ showToast('Document introuvable'); return; }
+  if(!state.projects.length){ showToast("Créez d'abord un projet"); return; }
+  const sel = state.ui.selectedProject;
+  const projectId = cur ? cur.projectId : (opts.projectId || (sel!=='all' ? sel : state.projects[0].id));
+  const phaseId = cur ? cur.phaseId : (opts.phaseId||null);
+  let mode = (cur && cur.kind==='link') ? 'link' : 'file';
+  const phaseOptions = (pid, selected)=> `<option value="">Tout le projet (aucune phase)</option>` +
+    state.phases.filter(ph=>ph.projectId===pid).map(ph=>`<option value="${ph.id}" ${ph.id===selected?'selected':''}>${escapeHtml(ph.name)}</option>`).join('');
+
+  openModal2(`
+  <div class="modal">
+    <div class="modal-head"><h3>${editing?'Modifier le document':'Ajouter un document'}</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        ${editing?'':`<div class="field full"><label>Type</label>
+          <div class="seg" id="d_mode"><button type="button" data-mode="file" class="on">Fichier</button><button type="button" data-mode="link">Lien web</button></div></div>`}
+        <div class="field full ${editing?'hidden':''}" id="d_fileWrap"><label>Fichier(s)</label>
+          <input type="file" id="d_file" multiple>
+          <div class="hint">25 Mo maximum par fichier. Plusieurs fichiers possibles d'un coup.</div></div>
+        <div class="field full hidden" id="d_urlWrap"><label>Adresse du lien</label>
+          <input id="d_url" inputmode="url" autocapitalize="none" spellcheck="false" placeholder="https://… (SharePoint, Drive, GED…)" value="${cur&&cur.kind==='link'?escapeHtml(cur.url):''}"></div>
+        <div class="field full"><label>Nom affiché</label>
+          <input id="d_name" value="${cur?escapeHtml(cur.name):''}" placeholder="${editing?'':'Facultatif — par défaut, le nom du fichier'}"></div>
+        <div class="field"><label>Projet</label>
+          <select id="d_project">${state.projects.map(pr=>`<option value="${pr.id}" ${pr.id===projectId?'selected':''}>${escapeHtml(pr.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>Associé à</label>
+          <select id="d_phase">${phaseOptions(projectId, phaseId)}</select></div>
+      </div>
+      <div id="d_progress" class="hidden"><div class="hint" id="d_progressLabel"></div><div class="upload-progress"><div id="d_progressBar"></div></div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline modal-close">Annuler</button>
+      <button class="btn btn-primary" id="btnSaveDoc">${editing?'Enregistrer':'Ajouter'}</button>
+    </div>
+  </div>`);
+
+  const $ = (id)=>document.getElementById(id);
+  const applyMode = ()=>{
+    if(!editing){
+      $('d_fileWrap').classList.toggle('hidden', mode!=='file');
+      document.querySelectorAll('#d_mode [data-mode]').forEach(b=>b.classList.toggle('on', b.dataset.mode===mode));
+    }
+    $('d_urlWrap').classList.toggle('hidden', mode!=='link');
+  };
+  applyMode();
+  if(!editing) document.querySelectorAll('#d_mode [data-mode]').forEach(b=>b.addEventListener('click', ()=>{ mode=b.dataset.mode; applyMode(); }));
+  $('d_project').addEventListener('change', ()=>{ $('d_phase').innerHTML = phaseOptions($('d_project').value, null); });
+
+  const finish = (msg)=>{
+    closeModal2();
+    if(opts.onDone) opts.onDone();
+    renderAll();
+    showToast(msg);
+  };
+
+  $('btnSaveDoc').addEventListener('click', async ()=>{
+    if(!canEdit() || !state) return;
+    const pid = $('d_project').value;
+    const phid = $('d_phase').value || null;
+    const nameInput = $('d_name').value.trim();
+    const who = currentUser.displayName || currentUser.username || '';
+
+    if(editing){
+      const doc = state.docs.find(d=>d.id===opts.docId);
+      if(!doc){ showToast('Ce document a été supprimé entre-temps'); closeModal2(); return; }
+      if(doc.kind==='link'){
+        const u = normalizeUrlInput($('d_url').value);
+        if(!u){ showToast("Adresse du lien invalide (http ou https)"); return; }
+        doc.url = u;
+      }
+      if(nameInput) doc.name = nameInput;
+      doc.projectId = pid; doc.phaseId = phid;
+      persist(); finish('Document mis à jour'); return;
+    }
+
+    if(mode==='link'){
+      const u = normalizeUrlInput($('d_url').value);
+      if(!u){ showToast("Adresse du lien invalide (http ou https)"); return; }
+      let host = ''; try{ host = new URL(u).hostname; }catch(e){}
+      state.docs.push({id:uid(), projectId:pid, phaseId:phid, name:nameInput||host||'Lien', kind:'link', url:u, path:'', size:0, mime:'', addedAt:new Date().toISOString(), addedBy:who});
+      persist(); finish('Lien ajouté'); return;
+    }
+
+    const files = [...$('d_file').files];
+    if(!files.length){ showToast('Choisissez au moins un fichier'); return; }
+    const tooBig = files.find(f=>f.size>MAX_DOC_BYTES);
+    if(tooBig){ showToast(`« ${tooBig.name} » dépasse 25 Mo`, 4000); return; }
+
+    const btn = $('btnSaveDoc'); btn.disabled = true;
+    $('d_progress').classList.remove('hidden');
+    let ok = 0;
+    for(let i=0;i<files.length;i++){
+      const f = files[i];
+      try{
+        $('d_progressLabel').textContent = `Envoi ${i+1}/${files.length} — ${f.name}`;
+        $('d_progressBar').style.width = '0%';
+        const path = `pilot-docs/${pid}/${uid()}-${safeFileName(f.name)}`;
+        const res = await window.PilotFB.uploadFile(path, f, pct=>{ const bar=document.getElementById('d_progressBar'); if(bar) bar.style.width = pct+'%'; });
+        if(!state) return;
+        state.docs.push({id:uid(), projectId:pid, phaseId:phid, name:(files.length===1&&nameInput)?nameInput:f.name, kind:'file', url:res.url, path, size:f.size, mime:f.type||'', addedAt:new Date().toISOString(), addedBy:who});
+        ok++;
+      }catch(e){
+        console.error('Upload error', e);
+        showToast(storageErrorMessage(e), 6000);
+        break;
+      }
+    }
+    if(!state) return;
+    if(ok) persist();
+    if(ok===files.length){ finish(ok>1?`${ok} documents ajoutés`:'Document ajouté'); return; }
+    // échec partiel : on garde la fenêtre ouverte pour réessayer le reste
+    if(ok){ if(opts.onDone) opts.onDone(); renderAll(); }
+    const btn2 = document.getElementById('btnSaveDoc');
+    if(btn2){ btn2.disabled = false; $('d_file').value=''; $('d_progress').classList.add('hidden'); }
+  });
+}
+
+/* ---------------------------- DOCUMENTS TAB ---------------------------- */
+function renderDocsTab(){
+  const sel = state.ui.selectedProject;
+  setTopbar('Documents','Retrouvez rapidement les documents des projets et des phases', canEdit() ? `
+    <button class="btn btn-primary btn-sm" id="btnNewDoc">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Ajouter un document
+    </button>` : '');
+
+  const projPhases = sel==='all' ? [] : state.phases.filter(p=>p.projectId===sel);
+  if(docFilters.scope.startsWith('ph:') && !projPhases.some(p=>'ph:'+p.id===docFilters.scope)) docFilters.scope = 'all';
+
+  document.getElementById('contentPad').innerHTML = `
+    ${renderProjectBanner()}
+    <div class="panel">
+      <div class="toolbar-row">
+        <input type="text" class="search-input" id="docSearch" placeholder="Rechercher un document, un projet, une phase…" value="${escapeHtml(docFilters.search)}">
+        <select class="select-input" id="docScope">
+          <option value="all">Tous les documents</option>
+          <option value="project">Rattachés à un projet</option>
+          <option value="phase">Rattachés à une phase</option>
+          ${projPhases.map(p=>`<option value="ph:${p.id}">Phase · ${escapeHtml(p.name)}</option>`).join('')}
+        </select>
+        <span class="hint" id="docsCount" style="margin-left:auto"></span>
+      </div>
+      <div style="padding:0 18px 18px" id="docsResults"></div>
+    </div>`;
+
+  const scopeEl = document.getElementById('docScope');
+  scopeEl.value = docFilters.scope;
+  scopeEl.addEventListener('change', e=>{ docFilters.scope = e.target.value; fillDocsResults(); });
+  document.getElementById('docSearch').addEventListener('input', e=>{ docFilters.search = e.target.value; fillDocsResults(); });
+  const nb = document.getElementById('btnNewDoc');
+  if(nb) nb.addEventListener('click', ()=> openDocModal({}));
+  fillDocsResults();
+}
+
+function fillDocsResults(){
+  const box = document.getElementById('docsResults');
+  if(!box) return;
+  const sel = state.ui.selectedProject;
+  let docs = state.docs.filter(d=> sel==='all' || d.projectId===sel);
+  const total = docs.length;
+  const q = docFilters.search.trim().toLowerCase();
+  if(q) docs = docs.filter(d=>{
+    const pr = projectById(d.projectId), ph = d.phaseId ? phaseById(d.phaseId) : null;
+    return [d.name, pr&&pr.name, ph&&ph.name, d.addedBy].some(v=>String(v||'').toLowerCase().includes(q));
+  });
+  if(docFilters.scope==='project') docs = docs.filter(d=>!d.phaseId);
+  else if(docFilters.scope==='phase') docs = docs.filter(d=>!!d.phaseId);
+  else if(docFilters.scope.startsWith('ph:')) docs = docs.filter(d=>d.phaseId===docFilters.scope.slice(3));
+
+  document.getElementById('docsCount').textContent = `${docs.length} document${docs.length>1?'s':''}`;
+
+  if(!docs.length){
+    box.innerHTML = `<div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      <div class="t">${total ? 'Aucun document ne correspond' : 'Aucun document pour le moment'}</div>
+      ${total ? 'Modifiez la recherche ou le filtre.' : (canEdit() ? 'Ajoutez des fichiers ou des liens, au niveau d\'un projet ou d\'une phase.' : '')}
+    </div>`;
+    return;
+  }
+  const groups = state.projects.filter(p=>sel==='all' || p.id===sel)
+    .map(p=>({p, list:sortDocs(docs.filter(d=>d.projectId===p.id))})).filter(g=>g.list.length);
+  box.innerHTML = groups.map(g=>`
+    ${sel==='all' ? `<div class="doc-group-head"><span class="proj-dot" style="background:${g.p.color}"></span>${escapeHtml(g.p.name)}<span class="n">${g.list.length}</span></div>` : ''}
+    <div class="doc-list" ${sel!=='all'?'style="margin-top:14px"':''}>${g.list.map(d=>docRowHtml(d,{showScope:true})).join('')}</div>`).join('');
+  bindDocActions(box, null);
+}
+
 /* ---------------------------- PHASE MODAL ---------------------------- */
 function openPhaseModal(phaseId){
   const editing = !!phaseId;
@@ -1709,6 +2111,9 @@ function openPhaseModal(phaseId){
         <div class="field full"><label>Notes</label><textarea id="f_notes" placeholder="Contexte, contraintes, jalons intermédiaires…">${escapeHtml(p.notes||'')}</textarea></div>
       </div>
 
+      <div class="section-sub">📎 Documents de la phase</div>
+      <div id="phaseDocs">${editing?'':'<div class="hint">Enregistrez d\'abord la phase pour pouvoir y associer des documents.</div>'}</div>
+
       <div class="section-sub">☢ Risques associés</div>
       <div class="mini-list" id="phaseRisksList">
         ${risksForPhase.length? risksForPhase.map(r=>`<div class="mini-item"><div class="body"><strong>${escapeHtml(r.description)}</strong><div class="hint" style="margin-top:3px">Probabilité ${r.probability}/5 · Impact ${r.impact}/5 · ${r.status}</div></div></div>`).join('') : '<div class="hint">Aucun risque lié. Ajoutez-en depuis l\'onglet Risques.</div>'}
@@ -1721,6 +2126,7 @@ function openPhaseModal(phaseId){
     </div>
   </div>`);
 
+  if(editing) mountDocsSection(document.getElementById('phaseDocs'), p.projectId, p.id);
   if(!canEdit()) makeModalReadOnly('Détail de la phase');
   let currentDeps = new Set(p.deps||[]);
   document.querySelectorAll('#f_deps [data-dep]').forEach(btn=>{
@@ -1734,7 +2140,9 @@ function openPhaseModal(phaseId){
 
   if(editing){
     document.getElementById('btnDeletePhase').addEventListener('click', ()=>{
-      if(!confirm('Supprimer cette phase ?')) return;
+      const nPhaseDocs = state.docs.filter(d=>d.phaseId===p.id).length;
+      if(!confirm('Supprimer cette phase ?' + (nPhaseDocs ? ` Ses ${nPhaseDocs} document(s) seront conservés au niveau du projet.` : ''))) return;
+      state.docs.forEach(d=>{ if(d.phaseId===p.id) d.phaseId = null; });
       state.phases = state.phases.filter(x=>x.id!==p.id);
       state.phases.forEach(x=>{ x.deps = (x.deps||[]).filter(d=>d!==p.id); });
       state.risks = state.risks.filter(r=>r.phaseId!==p.id);
@@ -1767,6 +2175,7 @@ function openPhaseModal(phaseId){
     if(editing){
       const cur = phaseById(p.id);
       if(!cur){ showToast('Cette phase a été supprimée entre-temps'); closeModal(); return; }
+      if(cur.projectId!==data.projectId) state.docs.forEach(d=>{ if(d.phaseId===cur.id) d.projectId = data.projectId; });
       Object.assign(cur, data);
     }
     else { state.phases.push(Object.assign({id:uid()}, data)); }
@@ -1835,29 +2244,69 @@ function openRiskModal(riskId){
 }
 
 /* ---------------------------- NEW PROJECT MODAL ---------------------------- */
-function openProjectModal(){
-  if(!canEdit()){ showToast('Action réservée aux chefs de projet'); return; }
-  const color = PROJECT_COLORS[state.projects.length % PROJECT_COLORS.length];
+function openProjectModal(projectId){
+  const editing = typeof projectId==='string';
+  if(!editing && !canEdit()){ showToast('Action réservée aux chefs de projet'); return; }
+  const cur = editing ? projectById(projectId) : null;
+  if(editing && !cur){ showToast('Projet introuvable'); return; }
+  const color = cur ? cur.color : PROJECT_COLORS[state.projects.length % PROJECT_COLORS.length];
+  const v = (k)=> escapeHtml(cur ? (cur[k]||'') : '');
   openModal(`
-  <div class="modal">
-    <div class="modal-head"><h3>Nouveau projet</h3><button class="modal-close">✕</button></div>
+  <div class="modal ${editing?'wide':''}">
+    <div class="modal-head"><h3>${editing?'Fiche projet':'Nouveau projet'}</h3><button class="modal-close">✕</button></div>
     <div class="modal-body">
-      <div class="field full"><label>Nom du projet</label><input id="np_name" placeholder="Ex. Extension atelier peinture"></div>
+      <div class="form-grid">
+        <div class="field full"><label>Nom du projet</label><input id="np_name" value="${v('name')}" placeholder="Ex. Extension atelier peinture"></div>
+        <div class="field full"><label>Descriptif / contexte</label><textarea id="np_desc" rows="4" placeholder="Enjeux, périmètre, contraintes, contexte de la demande…">${v('description')}</textarea></div>
+        <div class="field"><label>Demandeur — nom</label><input id="np_reqname" value="${v('reqName')}" placeholder="Prénom Nom"></div>
+        <div class="field"><label>Service / entité</label><input id="np_reqorg" value="${v('reqOrg')}" placeholder="Ex. Production, Maintenance…"></div>
+        <div class="field"><label>E-mail</label><input id="np_reqmail" type="email" inputmode="email" autocapitalize="none" value="${v('reqEmail')}" placeholder="prenom.nom@société.fr"></div>
+        <div class="field"><label>Téléphone</label><input id="np_reqphone" type="tel" value="${v('reqPhone')}" placeholder="06 00 00 00 00"></div>
+      </div>
+      ${editing ? `<div class="section-sub">📎 Documents du projet</div><div id="projDocs"></div>` : `<div class="hint" style="margin-top:12px">Vous pourrez ajouter des documents une fois le projet créé.</div>`}
     </div>
     <div class="modal-foot">
       <button class="btn btn-outline modal-close">Annuler</button>
-      <button class="btn btn-primary" id="btnCreateProject">Créer</button>
+      <button class="btn btn-primary" id="${editing?'btnSaveProject':'btnCreateProject'}">${editing?'Enregistrer':'Créer'}</button>
     </div>
   </div>`);
-  document.getElementById('btnCreateProject').addEventListener('click', ()=>{
-    const name = document.getElementById('np_name').value.trim();
-    if(!name){ showToast('Le nom du projet est requis'); return; }
-    const proj = {id:uid(), name, color};
-    state.projects.push(proj);
-    state.ui.selectedProject = proj.id;
-    persist(); closeModal(); renderAll();
-    showToast('Projet créé');
+  if(editing) mountDocsSection(document.getElementById('projDocs'), cur.id, null);
+  if(editing && !canEdit()) makeModalReadOnly('Fiche projet');
+
+  const readFields = ()=>({
+    name: document.getElementById('np_name').value.trim(),
+    description: document.getElementById('np_desc').value.trim(),
+    reqName: document.getElementById('np_reqname').value.trim(),
+    reqOrg: document.getElementById('np_reqorg').value.trim(),
+    reqEmail: document.getElementById('np_reqmail').value.trim(),
+    reqPhone: document.getElementById('np_reqphone').value.trim(),
   });
+  const validate = (f)=>{
+    if(!f.name){ showToast('Le nom du projet est requis'); return false; }
+    if(f.reqEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.reqEmail)){ showToast("L'adresse e-mail du demandeur est invalide"); return false; }
+    return true;
+  };
+
+  if(editing){
+    document.getElementById('btnSaveProject').addEventListener('click', ()=>{
+      if(!canEdit()) return;
+      const f = readFields(); if(!validate(f)) return;
+      const p = projectById(projectId);
+      if(!p){ showToast('Ce projet a été supprimé entre-temps'); closeModal(); return; }
+      Object.assign(p, f);
+      persist(); closeModal(); renderAll();
+      showToast('Projet mis à jour');
+    });
+  } else {
+    document.getElementById('btnCreateProject').addEventListener('click', ()=>{
+      const f = readFields(); if(!validate(f)) return;
+      const proj = Object.assign({id:uid(), color}, f);
+      state.projects.push(proj);
+      state.ui.selectedProject = proj.id;
+      persist(); closeModal(); renderAll();
+      showToast('Projet créé');
+    });
+  }
 }
 
 /* ---------------------------- EXPORT KPI (PDF) ---------------------------- */
@@ -2077,6 +2526,7 @@ function renderAll(){
     else if(currentTab==='phases') renderPhasesTab();
     else if(currentTab==='risks') renderRisksTab();
     else if(currentTab==='kpi') renderKpiTab();
+    else if(currentTab==='docs') renderDocsTab();
     else if(currentTab==='users') renderUsersTab();
     if(!canEdit()) ['btnNewPhaseTop','btnNewPhaseTop2','btnNewRisk'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('hidden'); });
   }catch(err){
@@ -2115,11 +2565,17 @@ function setupEvents(){
   document.querySelectorAll('.nav-btn[data-tab]').forEach(b=>{
     b.addEventListener('click', ()=>{ currentTab=b.dataset.tab; renderAll(); closeSidebar(); });
   });
-  document.getElementById('addProjectBtn').addEventListener('click', openProjectModal);
+  document.getElementById('addProjectBtn').addEventListener('click', ()=>openProjectModal());
+  // Boutons du bandeau projet (délégation : le contenu de la page est régénéré à chaque rendu)
+  document.getElementById('contentPad').addEventListener('click', (e)=>{
+    const b = e.target.closest('[data-pbaction]'); if(!b || !state) return;
+    if(b.dataset.pbaction==='edit') openProjectModal(state.ui.selectedProject);
+    else if(b.dataset.pbaction==='docs'){ currentTab='docs'; renderAll(); }
+  });
   document.getElementById('logoutBtn').addEventListener('click', ()=>{ closeSidebar(); window.PilotFB.logout(); });
   document.getElementById('accountBtn').addEventListener('click', ()=>{ closeSidebar(); openPasswordModal(); });
   document.getElementById('exportJsonBtn').addEventListener('click', ()=>{
-    const blob = new Blob([JSON.stringify({projects:state.projects, phases:state.phases, risks:state.risks},null,2)], {type:'application/json'});
+    const blob = new Blob([JSON.stringify({projects:state.projects, phases:state.phases, risks:state.risks, docs:state.docs},null,2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `pilot-data-${fmtDate(new Date())}.json`;
@@ -2137,7 +2593,7 @@ function setupEvents(){
         if(!data.projects || !data.phases) throw new Error('format invalide');
         if(!confirm('Importer ces données remplacera le contenu actuel. Continuer ?')) return;
         const norm = normalizeData(data);
-        state.projects = norm.projects; state.phases = norm.phases; state.risks = norm.risks;
+        state.projects = norm.projects; state.phases = norm.phases; state.risks = norm.risks; state.docs = norm.docs;
         state.ui.selectedProject = 'all';
         persist(); renderAll();
         showToast('Données importées avec succès');
@@ -2215,6 +2671,15 @@ async function bootstrapAdmin(){
   }
 }
 
+let storageApi = null;
+async function getStorageApi(){
+  if(!storageApi){
+    const m = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js");
+    storageApi = {m, s: m.getStorage(app)};
+  }
+  return storageApi;
+}
+
 window.PilotFB = {
   onAuth: (cb)=> onAuthStateChanged(auth, cb),
 
@@ -2255,6 +2720,22 @@ window.PilotFB = {
   },
   saveData(payload){
     return setDoc(doc(db,'pilot','data'), {payload, updatedAt: serverTimestamp(), updatedBy: auth.currentUser ? auth.currentUser.uid : null});
+  },
+
+  /* Documents (Firebase Storage) */
+  async uploadFile(path, file, onProgress){
+    const {m, s} = await getStorageApi();
+    return new Promise((resolve, reject)=>{
+      const task = m.uploadBytesResumable(m.ref(s, path), file, file.type ? {contentType:file.type} : undefined);
+      task.on('state_changed',
+        snap=>{ if(onProgress && snap.totalBytes) onProgress(Math.round(100*snap.bytesTransferred/snap.totalBytes)); },
+        reject,
+        async ()=>{ try{ resolve({url: await m.getDownloadURL(task.snapshot.ref)}); }catch(e){ reject(e); } });
+    });
+  },
+  async deleteFile(path){
+    const {m, s} = await getStorageApi();
+    await m.deleteObject(m.ref(s, path));
   },
 
   /* Gestion des comptes (administrateur) */
