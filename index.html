@@ -327,7 +327,7 @@ table.data-table tr:last-child td{border-bottom:none;}
 .empty-state .t{font-family:var(--font-display);font-size:18px;color:var(--text-2);margin-bottom:4px;}
 
 /* toast */
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg-raised);border:1px solid var(--border);color:var(--text-1);padding:11px 18px;border-radius:var(--radius-sm);font-size:13px;box-shadow:var(--shadow);z-index:200;display:flex;align-items:center;gap:8px;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg-raised);border:1px solid var(--border);color:var(--text-1);padding:11px 18px;border-radius:var(--radius-sm);font-size:13px;box-shadow:var(--shadow);z-index:400;display:flex;align-items:center;gap:8px;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
 
 .priority-tag{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.03em;}
@@ -337,6 +337,26 @@ table.data-table tr:last-child td{border-bottom:none;}
 .pr-Critique{background:var(--red-soft);color:#ff9095;}
 
 .resp-avatar{width:22px;height:22px;border-radius:50%;background:var(--bg-raised);display:inline-flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:var(--text-2);margin-right:6px;}
+
+/* ---------- AUTH ---------- */
+#authScreen{position:fixed;inset:0;z-index:300;background:var(--bg-deep);display:flex;align-items:center;justify-content:center;padding:20px;
+  background-image:radial-gradient(circle at 15% 0%, rgba(77,159,255,.10), transparent 45%),radial-gradient(circle at 85% 100%, rgba(157,123,255,.08), transparent 45%);}
+.auth-card{width:100%;max-width:380px;background:var(--bg-panel);border:1px solid var(--border);border-radius:14px;padding:28px 26px;box-shadow:var(--shadow);}
+.auth-card .brand{padding:0 0 18px;}
+.auth-card h2{font-family:var(--font-display);font-size:21px;font-weight:600;margin-bottom:14px;}
+.auth-card form{display:flex;flex-direction:column;gap:14px;}
+.auth-card input{background:var(--bg-panel-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:16px;width:100%;}
+.auth-card input:focus{border-color:var(--accent);}
+.auth-error{color:#ff9095;font-size:12.5px;min-height:1px;}
+.auth-error:empty{display:none;}
+.auth-loading{color:var(--text-3);text-align:center;padding:20px 0;}
+.auth-link{background:none;border:none;color:var(--text-3);font-size:12.5px;text-decoration:underline;padding:4px;}
+.auth-note{font-size:12px;color:var(--text-3);line-height:1.5;}
+.user-box{display:flex;align-items:center;gap:10px;padding:6px 8px 4px;}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex:none;}
+.user-meta{min-width:0;}
+.user-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.user-role{font-size:11px;color:var(--text-3);}
 
 /* Print target (off-screen for export) */
 #printTarget{position:fixed;left:-99999px;top:0;background:#fff;}
@@ -442,6 +462,10 @@ table.data-table tr:last-child td{border-bottom:none;}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 15l4-6 3 3 5-7"/></svg>
       KPI &amp; Rapports
     </button>
+    <button class="nav-btn hidden" data-tab="users" id="navUsers">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Utilisateurs
+    </button>
 
     <div class="nav-group-label">Projets</div>
     <div class="proj-list" id="projList"></div>
@@ -451,6 +475,11 @@ table.data-table tr:last-child td{border-bottom:none;}
     </button>
 
     <div class="sidebar-foot">
+      <div class="user-box"><div class="user-avatar" id="userAvatar">?</div><div class="user-meta"><div class="user-name" id="userName"></div><div class="user-role" id="userRole"></div></div></div>
+      <div class="io-row">
+        <button class="io-btn" id="accountBtn" title="Changer mon mot de passe">Mot de passe</button>
+        <button class="io-btn" id="logoutBtn" title="Se déconnecter">Déconnexion</button>
+      </div>
       <div class="save-state"><span class="save-dot" id="saveDot"></span><span id="saveText">Enregistré</span></div>
       <div class="io-row">
         <button class="io-btn" id="exportJsonBtn" title="Exporter les données (JSON)">
@@ -487,6 +516,34 @@ table.data-table tr:last-child td{border-bottom:none;}
 <div id="toast"></div>
 <div id="modalRoot"></div>
 <div id="printTarget"></div>
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-mark">P</div>
+      <div class="brand-text"><div class="t1">PILOT</div><div class="t2">Pilotage industriel</div></div>
+    </div>
+    <div id="authLoading" class="auth-loading">Connexion au serveur…</div>
+    <form id="loginForm" class="hidden" autocomplete="on">
+      <h2>Connexion</h2>
+      <div class="field"><label for="loginUser">Identifiant</label><input id="loginUser" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+      <div class="field"><label for="loginPass">Mot de passe</label><input id="loginPass" name="password" type="password" autocomplete="current-password"></div>
+      <div class="auth-error" id="loginError"></div>
+      <button class="btn btn-primary" type="submit" id="loginBtn" style="justify-content:center">Se connecter</button>
+    </form>
+    <form id="forceForm" class="hidden" autocomplete="off">
+      <h2>Choisissez votre mot de passe</h2>
+      <div class="auth-note">Première connexion : le mot de passe provisoire doit être remplacé avant de continuer. Il ne fonctionnera plus ensuite.</div>
+      <div class="field"><label for="forceCurrent">Mot de passe actuel (provisoire)</label><input id="forceCurrent" type="password" autocomplete="current-password"></div>
+      <div class="field"><label for="forceNew">Nouveau mot de passe</label><input id="forceNew" type="password" autocomplete="new-password"></div>
+      <div class="field"><label for="forceNew2">Confirmer le nouveau mot de passe</label><input id="forceNew2" type="password" autocomplete="new-password"></div>
+      <div class="auth-note">8 caractères minimum.</div>
+      <div class="auth-error" id="forceError"></div>
+      <button class="btn btn-primary" type="submit" id="forceBtn" style="justify-content:center">Enregistrer et continuer</button>
+      <button class="auth-link" type="button" id="forceLogout">Se déconnecter</button>
+    </form>
+  </div>
+</div>
+
 
 <script>
 /* =========================================================================
@@ -572,116 +629,355 @@ function seedDeps(s){
   return s;
 }
 
-/* ---------------------------- PERSISTENCE ---------------------------- */
-/* Storage adapter: uses the Claude artifact storage API (window.storage) when
-   available (i.e. when this file is opened inside Claude's artifact preview),
-   and transparently falls back to the browser's localStorage when the file is
-   downloaded/hosted and opened directly (window.storage does not exist there,
-   e.g. once hosted on GitHub Pages). If the artifact storage API exists but
-   errors at runtime (e.g. "Internal server error"), the adapter downgrades
-   itself to localStorage (or an in-memory store as a last resort) and retries
-   automatically, so a save is never silently lost — only the very first
-   failed attempt needs a retry, every attempt after that uses the fallback. */
-const STORAGE_KEY = 'pilot-pm-data';
-let storageMode = 'unknown';
+/* ---------------------------- SESSION / RÔLES ---------------------------- */
+const ROLE_LABELS = {admin:'Administrateur', manager:'Chef de projet', viewer:'Visionneur'};
+const LEGACY_KEY = 'pilot-pm-data';
+let currentUser = null;      // {uid, username, displayName, role, active, mustChangePassword}
+let unsubscribeData = null;
+let lastPayload = null;      // dernière version des données connue du serveur (évite les écho)
+let appStarted = false;
+let pendingAuthMessage = '';
+let authSeq = 0;
 
-function makeLocalAdapter(){
-  storageMode = 'local';
+function canEdit(){ return !!currentUser && (currentUser.role==='admin' || currentUser.role==='manager'); }
+function isAdmin(){ return !!currentUser && currentUser.role==='admin'; }
+
+/* Préférences d'affichage (projet sélectionné, KPI cochés) : locales, par utilisateur. */
+function defaultUi(){ return {selectedProject:'all', kpiSelection: KPI_DEFS.map(k=>k.id)}; }
+function uiKey(){ return 'pilot-ui-'+(currentUser?currentUser.uid:'anon'); }
+function loadUi(){
+  try{ const v = window.localStorage.getItem(uiKey()); if(v) return Object.assign(defaultUi(), JSON.parse(v)); }catch(e){}
+  return defaultUi();
+}
+function saveUi(){ try{ window.localStorage.setItem(uiKey(), JSON.stringify(state.ui)); }catch(e){} }
+
+/* Données partagées (projets, phases, risques) : un document Firestore pilot/data. */
+function dataPayload(){ return JSON.stringify({projects:state.projects, phases:state.phases, risks:state.risks}); }
+function normalizeData(d){
   return {
-    async get(key){
-      const v = window.localStorage.getItem(key);
-      if(v===null) throw new Error('not found');
-      return {key, value:v};
-    },
-    async set(key,value){ window.localStorage.setItem(key,value); return {key,value}; },
+    projects: Array.isArray(d.projects)?d.projects:[],
+    phases: (Array.isArray(d.phases)?d.phases:[]).map(p=> typeof p.critical==='boolean' ? p : Object.assign({}, p, {critical:false})),
+    risks: Array.isArray(d.risks)?d.risks:[],
   };
 }
-function makeMemoryAdapter(){
-  storageMode = 'memory';
-  const mem = {};
-  return {
-    async get(key){ if(!(key in mem)) throw new Error('not found'); return {key,value:mem[key]}; },
-    async set(key,value){ mem[key]=value; return {key,value}; },
-  };
+function setSaveState(kind, text){
+  const dot = document.getElementById('saveDot'), txt = document.getElementById('saveText');
+  if(!dot||!txt) return;
+  dot.classList.remove('pending','error');
+  if(kind==='pending') dot.classList.add('pending');
+  if(kind==='error') dot.classList.add('error');
+  txt.textContent = text;
 }
-function makeLocalOrMemoryAdapter(){
+function persist(){
+  if(!state || !currentUser) return;
+  saveUi();
+  if(!canEdit()) return;
+  const payload = dataPayload();
+  if(payload===lastPayload) return;
+  lastPayload = payload;
+  setSaveState('pending','Enregistrement…');
+  window.PilotFB.saveData(payload).then(()=>{
+    setSaveState('ok','Enregistré (cloud)');
+  }).catch(e=>{
+    lastPayload = null;
+    console.error('Persist error:', e);
+    setSaveState('error','Erreur de sauvegarde');
+    showToast(authErrorMessage(e));
+  });
+}
+function applyRemoteData(r){
+  if(!state || !currentUser) return;
+  if(!r.exists){
+    if(r.fromCache) return;
+    let initial = {projects:[], phases:[], risks:[]};
+    if(canEdit()){
+      // Première utilisation : on reprend d'éventuelles données de l'ancienne version locale.
+      try{
+        const v = window.localStorage.getItem(LEGACY_KEY);
+        if(v){ const d = JSON.parse(v); if(d && d.projects && d.phases){ initial = normalizeData(d); showToast('Données locales existantes migrées vers le cloud'); } }
+      }catch(e){}
+    }
+    state.projects = initial.projects; state.phases = initial.phases; state.risks = initial.risks;
+    lastPayload = null;
+    persist();
+    renderAll();
+    return;
+  }
+  if(r.pending) return;                 // écho de notre propre écriture en cours
+  if(r.payload===lastPayload) return;   // écho de notre écriture confirmée
   try{
-    const testKey = '__pilot_test__';
-    window.localStorage.setItem(testKey,'1');
-    window.localStorage.removeItem(testKey);
-    return makeLocalAdapter();
+    const d = normalizeData(JSON.parse(r.payload));
+    state.projects = d.projects; state.phases = d.phases; state.risks = d.risks;
+    lastPayload = r.payload;
+  }catch(e){ console.error('Données distantes illisibles', e); return; }
+  setSaveState('ok','Synchronisé');
+  renderAll();
+}
+
+/* ---------------------------- AUTHENTIFICATION ---------------------------- */
+function authErrorMessage(e){
+  const c = (e && e.code) || '';
+  const map = {
+    'auth/invalid-credential':'Identifiant ou mot de passe incorrect.',
+    'auth/invalid-login-credentials':'Identifiant ou mot de passe incorrect.',
+    'auth/user-not-found':'Identifiant ou mot de passe incorrect.',
+    'auth/wrong-password':'Identifiant ou mot de passe incorrect.',
+    'auth/too-many-requests':'Trop de tentatives. Réessayez dans quelques minutes.',
+    'auth/network-request-failed':'Réseau indisponible. Vérifiez votre connexion.',
+    'auth/operation-not-allowed':"La connexion « E-mail/Mot de passe » n'est pas activée dans Firebase Authentication.",
+    'auth/email-already-in-use':'Cet identifiant est déjà utilisé.',
+    'auth/weak-password':'Mot de passe trop faible (6 caractères minimum).',
+    'auth/requires-recent-login':'Session trop ancienne : reconnectez-vous puis réessayez.',
+    'auth/invalid-email':'Identifiant invalide.',
+    'permission-denied':"Accès refusé par les règles Firestore (vérifiez qu'elles sont publiées et que votre rôle le permet).",
+    'pilot/bootstrap-denied':"Le compte administrateur initial n'a pas pu être créé (il existe déjà, ou les règles Firestore ne sont pas publiées).",
+  };
+  return map[c] || ('Erreur : '+((e && e.message) || c || 'inconnue'));
+}
+function validateNewPassword(pw, username){
+  if(pw.length<8) return 'Le nouveau mot de passe doit contenir au moins 8 caractères.';
+  if(pw==='totototo') return "Ce mot de passe provisoire n'est pas autorisé.";
+  if(username && pw.toLowerCase()===String(username).toLowerCase()) return "Le mot de passe ne peut pas être identique à l'identifiant.";
+  return '';
+}
+function showAuthScreen(view, message){
+  document.getElementById('authScreen').classList.remove('hidden');
+  ['authLoading','loginForm','forceForm'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  const target = view==='force' ? 'forceForm' : view==='loading' ? 'authLoading' : 'loginForm';
+  document.getElementById(target).classList.remove('hidden');
+  const errId = view==='force' ? 'forceError' : 'loginError';
+  const errEl = document.getElementById(errId);
+  if(errEl) errEl.textContent = message || '';
+  if(view==='login'){ document.getElementById('loginBtn').disabled=false; document.getElementById('loginBtn').textContent='Se connecter'; document.getElementById('loginPass').value=''; }
+}
+function hideAuthScreen(){ document.getElementById('authScreen').classList.add('hidden'); }
+
+async function onAuthChange(fbUser){
+  const seq = ++authSeq;
+  if(!fbUser){
+    if(unsubscribeData){ unsubscribeData(); unsubscribeData=null; }
+    currentUser = null; state = null; lastPayload = null;
+    closeModal(); closeSidebar();
+    const msg = pendingAuthMessage; pendingAuthMessage='';
+    showAuthScreen('login', msg);
+    return;
+  }
+  showAuthScreen('loading');
+  try{
+    const prof = await window.PilotFB.getProfile(fbUser.uid);
+    if(seq!==authSeq) return;
+    if(!prof){ pendingAuthMessage = "Ce compte n'a pas de profil dans l'outil. Contactez un administrateur."; await window.PilotFB.logout(); return; }
+    if(prof.active!==true){ pendingAuthMessage = 'Ce compte est désactivé.'; await window.PilotFB.logout(); return; }
+    currentUser = Object.assign({uid:fbUser.uid}, prof);
+    if(prof.mustChangePassword){ showAuthScreen('force'); return; }
+    await enterApp();
   }catch(e){
-    return makeMemoryAdapter();
+    console.error('Auth error', e);
+    pendingAuthMessage = authErrorMessage(e);
+    try{ await window.PilotFB.logout(); }catch(_){ showAuthScreen('login', pendingAuthMessage); }
   }
 }
-function makeStorageAdapter(){
-  if(typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get==='function'){
-    storageMode = 'artifact';
-    const artifact = window.storage;
-    // Wrapped so that if the artifact backend errors at runtime, we drop down
-    // to localStorage/memory instead of failing the save outright.
-    return {
-      async get(key){
-        try{
-          return await artifact.get(key, false);
-        }catch(e){
-          console.warn('Artifact storage get failed, falling back:', e);
-          storageAdapter = makeLocalOrMemoryAdapter();
-          return storageAdapter.get(key);
-        }
-      },
-      async set(key,value){
-        try{
-          return await artifact.set(key, value, false);
-        }catch(e){
-          console.warn('Artifact storage set failed, falling back:', e);
-          storageAdapter = makeLocalOrMemoryAdapter();
-          return storageAdapter.set(key,value);
-        }
-      },
-    };
-  }
-  return makeLocalOrMemoryAdapter();
-}
-let storageAdapter = null;
 
-async function loadState(){
-  storageAdapter = makeStorageAdapter();
-  try{
-    const res = await storageAdapter.get(STORAGE_KEY);
-    if(res && res.value){
-      state = JSON.parse(res.value);
-      if(!state.ui) state.ui = {selectedProject:'all', kpiSelection: KPI_DEFS.map(k=>k.id)};
-      if(!state.ui.kpiSelection) state.ui.kpiSelection = KPI_DEFS.map(k=>k.id);
-      if(!state.risks) state.risks=[];
-      if(!state.projects) state.projects=[];
-      if(!state.phases) state.phases=[];
-      state.phases.forEach(p=>{ if(typeof p.critical!=='boolean') p.critical=false; });
-      return;
-    }
-  }catch(e){ /* no data yet, seed below */ }
-  state = seedDeps(seedData());
-  persist(true);
+function applyRoleUi(){
+  document.getElementById('navUsers').classList.toggle('hidden', !isAdmin());
+  document.getElementById('addProjectBtn').classList.toggle('hidden', !canEdit());
+  document.getElementById('importJsonBtn').classList.toggle('hidden', !canEdit());
+  const name = currentUser.displayName || currentUser.username || '?';
+  document.getElementById('userName').textContent = name;
+  document.getElementById('userRole').textContent = ROLE_LABELS[currentUser.role] || currentUser.role;
+  document.getElementById('userAvatar').textContent = initials(name);
+  if(currentTab==='users' && !isAdmin()) currentTab='planning';
 }
-function persist(immediate){
-  const dot = document.getElementById('saveDot');
-  const txt = document.getElementById('saveText');
-  if(dot){dot.classList.remove('error'); dot.classList.add('pending'); txt.textContent='Enregistrement…';}
-  clearTimeout(saveTimer);
-  const doSave = async ()=>{
+
+async function enterApp(){
+  state = {projects:[], phases:[], risks:[], ui:loadUi()};
+  lastPayload = null;
+  hideAuthScreen();
+  applyRoleUi();
+  if(!appStarted){ setupEvents(); appStarted = true; }
+  setSaveState('pending','Synchronisation…');
+  renderAll();
+  if(unsubscribeData) unsubscribeData();
+  unsubscribeData = window.PilotFB.listenData(applyRemoteData, (err)=>{
+    console.error('Sync error', err);
+    setSaveState('error','Erreur de synchronisation');
+    showToast(authErrorMessage(err));
+  });
+}
+
+function setupAuthEvents(){
+  document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value;
+    const err = document.getElementById('loginError'); err.textContent='';
+    if(!u || !p){ err.textContent='Saisissez votre identifiant et votre mot de passe.'; return; }
+    const btn = document.getElementById('loginBtn'); btn.disabled=true; btn.textContent='Connexion…';
+    try{ await window.PilotFB.login(u,p); }
+    catch(ex){ err.textContent = authErrorMessage(ex); btn.disabled=false; btn.textContent='Se connecter'; }
+  });
+  document.getElementById('forceForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const cur = document.getElementById('forceCurrent').value;
+    const n1 = document.getElementById('forceNew').value, n2 = document.getElementById('forceNew2').value;
+    const err = document.getElementById('forceError'); err.textContent='';
+    const v = validateNewPassword(n1, currentUser && currentUser.username);
+    if(!cur){ err.textContent='Saisissez le mot de passe actuel (provisoire).'; return; }
+    if(v){ err.textContent=v; return; }
+    if(n1!==n2){ err.textContent='Les deux mots de passe ne correspondent pas.'; return; }
+    if(n1===cur){ err.textContent="Le nouveau mot de passe doit être différent de l'ancien."; return; }
+    const btn = document.getElementById('forceBtn'); btn.disabled=true;
     try{
-      if(!storageAdapter) storageAdapter = makeStorageAdapter();
-      await storageAdapter.set(STORAGE_KEY, JSON.stringify(state));
-      if(dot){dot.classList.remove('pending'); dot.classList.remove('error');}
-      if(txt) txt.textContent = storageMode==='local' ? 'Enregistré (navigateur)' : storageMode==='memory' ? 'Enregistré (session)' : 'Enregistré';
-    }catch(e){
-      if(dot){dot.classList.remove('pending'); dot.classList.add('error');}
-      if(txt) txt.textContent='Erreur de sauvegarde';
-      console.error('Persist error:', e);
-    }
-  };
-  if(immediate) doSave(); else saveTimer = setTimeout(doSave, 500);
+      await window.PilotFB.changePassword(cur, n1);
+      currentUser.mustChangePassword = false;
+      document.getElementById('forceCurrent').value=''; document.getElementById('forceNew').value=''; document.getElementById('forceNew2').value='';
+      await enterApp();
+      showToast('Mot de passe modifié');
+    }catch(ex){ err.textContent = authErrorMessage(ex); }
+    finally{ btn.disabled=false; }
+  });
+  document.getElementById('forceLogout').addEventListener('click', ()=> window.PilotFB.logout());
 }
+
+/* ---------------------------- COMPTE : CHANGER SON MOT DE PASSE ---------------------------- */
+function openPasswordModal(){
+  openModal(`
+  <div class="modal">
+    <div class="modal-head"><h3>Mon compte</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:14px">${escapeHtml(currentUser.displayName||'')} · ${escapeHtml(currentUser.username)} · ${ROLE_LABELS[currentUser.role]||''}</div>
+      <div class="form-grid">
+        <div class="field full"><label>Mot de passe actuel</label><input type="password" id="pw_cur" autocomplete="current-password"></div>
+        <div class="field"><label>Nouveau mot de passe</label><input type="password" id="pw_new" autocomplete="new-password"></div>
+        <div class="field"><label>Confirmer</label><input type="password" id="pw_new2" autocomplete="new-password"></div>
+        <div class="field full"><span class="hint">8 caractères minimum.</span><div class="auth-error" id="pw_err"></div></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline modal-close">Annuler</button>
+      <button class="btn btn-primary" id="btnSavePw">Changer le mot de passe</button>
+    </div>
+  </div>`);
+  document.getElementById('btnSavePw').addEventListener('click', async ()=>{
+    const cur = document.getElementById('pw_cur').value, n1 = document.getElementById('pw_new').value, n2 = document.getElementById('pw_new2').value;
+    const err = document.getElementById('pw_err'); err.textContent='';
+    if(!cur){ err.textContent='Saisissez votre mot de passe actuel.'; return; }
+    const v = validateNewPassword(n1, currentUser.username);
+    if(v){ err.textContent=v; return; }
+    if(n1!==n2){ err.textContent='Les deux mots de passe ne correspondent pas.'; return; }
+    const btn = document.getElementById('btnSavePw'); btn.disabled=true;
+    try{ await window.PilotFB.changePassword(cur,n1); closeModal(); showToast('Mot de passe modifié'); }
+    catch(ex){ err.textContent = authErrorMessage(ex); btn.disabled=false; }
+  });
+}
+
+/* ---------------------------- ONGLET UTILISATEURS (admin) ---------------------------- */
+async function renderUsersTab(){
+  setTopbar('Utilisateurs','Comptes, rôles et accès à l\'outil', `
+    <button class="btn btn-primary btn-sm" id="btnNewUser">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Nouvel utilisateur
+    </button>`);
+  document.getElementById('btnNewUser').addEventListener('click', openUserModal);
+  const pad = document.getElementById('contentPad');
+  pad.innerHTML = `<div class="panel"><div class="empty-state">Chargement des comptes…</div></div>`;
+  let users;
+  try{ users = await window.PilotFB.listUsers(); }
+  catch(e){ if(currentTab==='users') pad.innerHTML = `<div class="panel"><div class="empty-state"><div class="t">Impossible de charger les comptes</div>${escapeHtml(authErrorMessage(e))}</div></div>`; return; }
+  if(currentTab!=='users') return;
+  users.sort((a,b)=>String(a.username).localeCompare(String(b.username)));
+  const rows = users.map(u=>{
+    const me = u.uid===currentUser.uid;
+    const realEmail = u.email && !/@pilot\.local$/.test(u.email);
+    return `<tr>
+      <td><span class="resp-avatar">${initials(u.displayName||u.username)}</span><strong>${escapeHtml(u.displayName||u.username)}</strong>${me?' <span class="badge" style="background:var(--accent-soft);color:var(--accent)">VOUS</span>':''}</td>
+      <td style="font-family:var(--font-mono);font-size:12px;color:var(--text-2)">${escapeHtml(u.username)}</td>
+      <td><select class="select-input" data-role-uid="${u.uid}" ${me?'disabled':''}>
+        ${Object.keys(ROLE_LABELS).map(r=>`<option value="${r}" ${u.role===r?'selected':''}>${ROLE_LABELS[r]}</option>`).join('')}
+      </select></td>
+      <td><span class="status-pill ${u.active?'ontrack':'late'}"><span class="status-dot"></span>${u.active?'Actif':'Désactivé'}</span>${u.mustChangePassword?' <span class="badge" style="background:var(--amber-soft);color:#ffc266">MDP provisoire</span>':''}</td>
+      <td style="white-space:nowrap">
+        ${me?'':`<button class="btn btn-sm btn-outline" data-toggle-uid="${u.uid}" data-active="${u.active?1:0}">${u.active?'Désactiver':'Réactiver'}</button>`}
+        ${realEmail?` <button class="btn btn-sm btn-outline" data-reset-email="${escapeHtml(u.email)}">Réinit. MDP</button>`:''}
+      </td></tr>`;
+  }).join('');
+  pad.innerHTML = `
+    <div class="panel">
+      <div class="panel-head"><h2>Comptes</h2><div class="desc">${users.length} utilisateur(s)</div></div>
+      <div style="overflow-x:auto"><table class="data-table">
+        <thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>État</th><th>Actions</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+    </div>
+    <div class="panel" style="margin-top:16px;padding:16px 18px">
+      <div style="font-family:var(--font-display);font-weight:600;font-size:16px;margin-bottom:8px">Droits par rôle</div>
+      <div style="font-size:12.5px;color:var(--text-2);line-height:1.7">
+        <strong style="color:var(--text-1)">Administrateur</strong> — tout, y compris la gestion des comptes.<br>
+        <strong style="color:var(--text-1)">Chef de projet</strong> — crée et modifie projets, phases et risques ; import/export des données.<br>
+        <strong style="color:var(--text-1)">Visionneur</strong> — consultation seule (Gantt, suivi, risques, KPI) et exports PDF / JSON.
+      </div>
+      <div class="hint" style="margin-top:10px">Un compte désactivé ne peut plus se connecter. « Réinit. MDP » envoie un e-mail Firebase et n'existe que pour les comptes créés avec une vraie adresse e-mail comme identifiant.</div>
+    </div>`;
+  pad.querySelectorAll('[data-role-uid]').forEach(sel=>sel.addEventListener('change', async ()=>{
+    try{ await window.PilotFB.updateUser(sel.dataset.roleUid,{role:sel.value}); showToast('Rôle mis à jour'); }
+    catch(e){ showToast(authErrorMessage(e)); renderUsersTab(); }
+  }));
+  pad.querySelectorAll('[data-toggle-uid]').forEach(b=>b.addEventListener('click', async ()=>{
+    const makeActive = b.dataset.active!=='1';
+    try{ await window.PilotFB.updateUser(b.dataset.toggleUid,{active:makeActive}); showToast(makeActive?'Compte réactivé':'Compte désactivé'); renderUsersTab(); }
+    catch(e){ showToast(authErrorMessage(e)); }
+  }));
+  pad.querySelectorAll('[data-reset-email]').forEach(b=>b.addEventListener('click', async ()=>{
+    try{ await window.PilotFB.sendReset(b.dataset.resetEmail); showToast('E-mail de réinitialisation envoyé'); }
+    catch(e){ showToast(authErrorMessage(e)); }
+  }));
+}
+
+function openUserModal(){
+  openModal(`
+  <div class="modal">
+    <div class="modal-head"><h3>Nouvel utilisateur</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>Identifiant</label><input id="u_name" autocomplete="off" autocapitalize="none" placeholder="ex. jdupont ou jean@societe.fr"><span class="hint">3-32 caractères (lettres, chiffres, . _ -) ou une adresse e-mail.</span></div>
+        <div class="field"><label>Nom affiché</label><input id="u_display" autocomplete="off" placeholder="Jean Dupont"></div>
+        <div class="field"><label>Rôle</label>
+          <select id="u_role"><option value="viewer">Visionneur</option><option value="manager">Chef de projet</option><option value="admin">Administrateur</option></select></div>
+        <div class="field"><label>Mot de passe provisoire</label><input id="u_pass" type="text" autocomplete="off" placeholder="8 caractères minimum"><span class="hint">À changer par l'utilisateur dès sa première connexion.</span></div>
+        <div class="field full"><div class="auth-error" id="u_err"></div></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline modal-close">Annuler</button>
+      <button class="btn btn-primary" id="btnCreateUser">Créer le compte</button>
+    </div>
+  </div>`);
+  document.getElementById('btnCreateUser').addEventListener('click', async ()=>{
+    const username = document.getElementById('u_name').value.trim().toLowerCase();
+    const displayName = document.getElementById('u_display').value.trim();
+    const role = document.getElementById('u_role').value;
+    const pass = document.getElementById('u_pass').value;
+    const err = document.getElementById('u_err'); err.textContent='';
+    const okName = username.includes('@') ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username) : /^[a-z0-9._-]{3,32}$/.test(username);
+    if(!okName){ err.textContent='Identifiant invalide (3-32 caractères : lettres, chiffres, . _ - ; ou adresse e-mail).'; return; }
+    if(!displayName){ err.textContent='Le nom affiché est requis.'; return; }
+    if(pass.length<8){ err.textContent='Le mot de passe provisoire doit contenir au moins 8 caractères.'; return; }
+    const btn = document.getElementById('btnCreateUser'); btn.disabled=true;
+    try{
+      await window.PilotFB.createUser({username, displayName, role, password:pass});
+      closeModal(); showToast('Compte créé'); if(currentTab==='users') renderUsersTab();
+    }catch(ex){ err.textContent = authErrorMessage(ex); btn.disabled=false; }
+  });
+}
+
+function makeModalReadOnly(title){
+  const root = document.getElementById('modalRoot');
+  root.querySelectorAll('input,select,textarea').forEach(el=>el.disabled=true);
+  root.querySelectorAll('.chip-opt').forEach(el=>el.style.pointerEvents='none');
+  root.querySelectorAll('#btnSavePhase,#btnDeletePhase,#btnSaveRisk,#btnDeleteRisk,#btnCreateProject').forEach(el=>el.classList.add('hidden'));
+  const h = root.querySelector('.modal-head h3'); if(h && title) h.textContent = title;
+  root.querySelectorAll('.modal-foot .modal-close').forEach(b=>b.textContent='Fermer');
+}
+
 
 /* ---------------------------- UTILS ---------------------------- */
 function uid(){ return 'id'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); }
@@ -857,6 +1153,7 @@ function renderSidebar(){
       </button></div>`);
   });
   list.innerHTML = rows.join('');
+  if(!canEdit()) list.querySelectorAll('.del-proj').forEach(b=>b.remove());
   list.querySelectorAll('.proj-item').forEach(el=>{
     el.addEventListener('click',(e)=>{
       if(e.target.closest('.del-proj')) return;
@@ -1373,6 +1670,7 @@ function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
 /* ---------------------------- PHASE MODAL ---------------------------- */
 function openPhaseModal(phaseId){
   const editing = !!phaseId;
+  if(!editing && !canEdit()){ showToast('Action réservée aux chefs de projet'); return; }
   const p = editing ? phaseById(phaseId) : {
     id:null, projectId: state.ui.selectedProject!=='all'?state.ui.selectedProject:(state.projects[0]?state.projects[0].id:''),
     name:'', start:fmtDate(new Date()), end:fmtDate(addDays(new Date(),10)), progress:0,
@@ -1423,6 +1721,7 @@ function openPhaseModal(phaseId){
     </div>
   </div>`);
 
+  if(!canEdit()) makeModalReadOnly('Détail de la phase');
   let currentDeps = new Set(p.deps||[]);
   document.querySelectorAll('#f_deps [data-dep]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -1464,7 +1763,12 @@ function openPhaseModal(phaseId){
       deps: [...currentDeps],
       notes: document.getElementById('f_notes').value,
     };
-    if(editing){ Object.assign(p, data); }
+    if(!canEdit()) return;
+    if(editing){
+      const cur = phaseById(p.id);
+      if(!cur){ showToast('Cette phase a été supprimée entre-temps'); closeModal(); return; }
+      Object.assign(cur, data);
+    }
     else { state.phases.push(Object.assign({id:uid()}, data)); }
     persist(); closeModal(); renderAll();
     showToast(editing?'Phase mise à jour':'Phase créée');
@@ -1474,6 +1778,7 @@ function openPhaseModal(phaseId){
 /* ---------------------------- RISK MODAL ---------------------------- */
 function openRiskModal(riskId){
   const editing = !!riskId;
+  if(!editing && !canEdit()){ showToast('Action réservée aux chefs de projet'); return; }
   const r = editing ? state.risks.find(x=>x.id===riskId) : {id:null, phaseId:'', description:'', probability:3, impact:3, mitigation:'', status:'Ouvert'};
   const phases = visiblePhases().length ? visiblePhases() : state.phases;
   if(!phases.length){ showToast('Créez d\'abord une phase'); return; }
@@ -1500,6 +1805,7 @@ function openRiskModal(riskId){
       <button class="btn btn-primary" id="btnSaveRisk">${editing?'Enregistrer':'Créer le risque'}</button>
     </div>
   </div>`);
+  if(!canEdit()) makeModalReadOnly('Détail du risque');
   if(editing){
     document.getElementById('btnDeleteRisk').addEventListener('click', ()=>{
       if(!confirm('Supprimer ce risque ?')) return;
@@ -1517,7 +1823,12 @@ function openRiskModal(riskId){
       status:document.getElementById('r_status').value,
       mitigation:document.getElementById('r_mit').value,
     };
-    if(editing){ Object.assign(r,data); } else { state.risks.push(Object.assign({id:uid()},data)); }
+    if(!canEdit()) return;
+    if(editing){
+      const cur = state.risks.find(x=>x.id===r.id);
+      if(!cur){ showToast('Ce risque a été supprimé entre-temps'); closeModal(); return; }
+      Object.assign(cur,data);
+    } else { state.risks.push(Object.assign({id:uid()},data)); }
     persist(); closeModal(); renderAll();
     showToast(editing?'Risque mis à jour':'Risque créé');
   });
@@ -1525,6 +1836,7 @@ function openRiskModal(riskId){
 
 /* ---------------------------- NEW PROJECT MODAL ---------------------------- */
 function openProjectModal(){
+  if(!canEdit()){ showToast('Action réservée aux chefs de projet'); return; }
   const color = PROJECT_COLORS[state.projects.length % PROJECT_COLORS.length];
   openModal(`
   <div class="modal">
@@ -1756,13 +2068,17 @@ async function generateGanttPdf(phases, rangeStart, rangeEnd, zoom, scopeName){
 /* ---------------------------- ROUTER / INIT ---------------------------- */
 let currentTab = 'planning';
 function renderAll(){
+  if(!state || !currentUser) return;
   try{
+    if(state.ui.selectedProject!=='all' && !projectById(state.ui.selectedProject)) state.ui.selectedProject='all';
     renderSidebar();
     document.querySelectorAll('.nav-btn[data-tab]').forEach(b=>b.classList.toggle('active', b.dataset.tab===currentTab));
     if(currentTab==='planning') renderPlanningTab();
     else if(currentTab==='phases') renderPhasesTab();
     else if(currentTab==='risks') renderRisksTab();
     else if(currentTab==='kpi') renderKpiTab();
+    else if(currentTab==='users') renderUsersTab();
+    if(!canEdit()) ['btnNewPhaseTop','btnNewPhaseTop2','btnNewRisk'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('hidden'); });
   }catch(err){
     console.error('Render error:', err);
     const pad = document.getElementById('contentPad');
@@ -1800,8 +2116,10 @@ function setupEvents(){
     b.addEventListener('click', ()=>{ currentTab=b.dataset.tab; renderAll(); closeSidebar(); });
   });
   document.getElementById('addProjectBtn').addEventListener('click', openProjectModal);
+  document.getElementById('logoutBtn').addEventListener('click', ()=>{ closeSidebar(); window.PilotFB.logout(); });
+  document.getElementById('accountBtn').addEventListener('click', ()=>{ closeSidebar(); openPasswordModal(); });
   document.getElementById('exportJsonBtn').addEventListener('click', ()=>{
-    const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+    const blob = new Blob([JSON.stringify({projects:state.projects, phases:state.phases, risks:state.risks},null,2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `pilot-data-${fmtDate(new Date())}.json`;
@@ -1811,16 +2129,17 @@ function setupEvents(){
   document.getElementById('importJsonBtn').addEventListener('click', ()=>document.getElementById('importFileInput').click());
   document.getElementById('importFileInput').addEventListener('change', (e)=>{
     const file = e.target.files[0]; if(!file) return;
+    if(!canEdit()){ e.target.value=''; showToast('Import réservé aux chefs de projet'); return; }
     const reader = new FileReader();
     reader.onload = (ev)=>{
       try{
         const data = JSON.parse(ev.target.result);
         if(!data.projects || !data.phases) throw new Error('format invalide');
         if(!confirm('Importer ces données remplacera le contenu actuel. Continuer ?')) return;
-        state = data;
-        if(!state.ui) state.ui={selectedProject:'all', kpiSelection:KPI_DEFS.map(k=>k.id)};
-        if(!state.risks) state.risks=[];
-        persist(true); renderAll();
+        const norm = normalizeData(data);
+        state.projects = norm.projects; state.phases = norm.phases; state.risks = norm.risks;
+        state.ui.selectedProject = 'all';
+        persist(); renderAll();
         showToast('Données importées avec succès');
       }catch(err){ showToast('Fichier invalide'); }
     };
@@ -1829,12 +2148,135 @@ function setupEvents(){
   });
 }
 
-async function init(){
-  await loadState();
-  setupEvents();
-  renderAll();
+function boot(){
+  setupAuthEvents();
+  showAuthScreen('loading');
+  window.PilotFB.onAuth(onAuthChange);
 }
-init();
+window.pilotMain = boot;
+setTimeout(()=>{
+  if(!window.PilotFB){
+    const el=document.getElementById('authLoading');
+    if(el) el.innerHTML = 'Impossible de charger les services Firebase.<br>Vérifiez votre connexion puis <a href="" onclick="location.reload();return false" style="color:var(--accent)">rechargez la page</a>.';
+  }
+}, 10000);
+</script>
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updatePassword, sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBMrQ0NghnyWHiCz-UAW5jO3t5KzfB7FKo",
+  authDomain: "pilot-af79b.firebaseapp.com",
+  projectId: "pilot-af79b",
+  storageBucket: "pilot-af79b.firebasestorage.app",
+  messagingSenderId: "1001450450009",
+  appId: "1:1001450450009:web:af68654a8f18b6a2351548",
+  measurementId: "G-W8YXSPW1EN"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+// Analytics : facultatif, ne doit jamais bloquer l'outil
+import("https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics.js")
+  .then(m=>m.isSupported().then(ok=>{ if(ok) m.getAnalytics(app); }))
+  .catch(()=>{});
+
+/* Compte administrateur initial, créé automatiquement à la toute première connexion.
+   Le mot de passe provisoire doit être changé immédiatement (changement forcé) et
+   cesse alors de fonctionner. */
+const ADMIN_USERNAME = 'admin';
+const ADMIN_DEFAULT_PW = 'totototo';
+const EMAIL_DOMAIN = 'pilot.local';
+const toEmail = (u)=>{ u=String(u).trim().toLowerCase(); return u.includes('@') ? u : `${u}@${EMAIL_DOMAIN}`; };
+const ADMIN_EMAIL = toEmail(ADMIN_USERNAME);
+const coded = (code,msg)=> Object.assign(new Error(msg||code), {code});
+
+let bootstrapPromise = null;
+
+async function bootstrapAdmin(){
+  let cred;
+  try{ cred = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_DEFAULT_PW); }
+  catch(e){
+    if(e.code==='auth/email-already-in-use') throw coded('auth/invalid-credential');
+    throw e;
+  }
+  const uid = cred.user.uid;
+  try{
+    const batch = writeBatch(db);
+    batch.set(doc(db,'meta','bootstrap'), {uid, createdAt: serverTimestamp()});
+    batch.set(doc(db,'users',uid), {username:ADMIN_USERNAME, email:ADMIN_EMAIL, displayName:'Administrateur', role:'admin', active:true, mustChangePassword:true, createdAt: serverTimestamp()});
+    await batch.commit();
+  }catch(e){
+    console.error('Bootstrap failed', e);
+    try{ await deleteUser(cred.user); }catch(_){}
+    throw coded('pilot/bootstrap-denied');
+  }
+}
+
+window.PilotFB = {
+  onAuth: (cb)=> onAuthStateChanged(auth, cb),
+
+  async login(username, password){
+    const email = toEmail(username);
+    try{ await signInWithEmailAndPassword(auth, email, password); }
+    catch(e){
+      const notFound = ['auth/invalid-credential','auth/invalid-login-credentials','auth/user-not-found','auth/wrong-password'];
+      if(email===ADMIN_EMAIL && password===ADMIN_DEFAULT_PW && notFound.includes(e.code)){
+        bootstrapPromise = bootstrapAdmin();
+        try{ await bootstrapPromise; } finally { bootstrapPromise = null; }
+        return;
+      }
+      throw e;
+    }
+  },
+  logout: ()=> signOut(auth),
+
+  async getProfile(uid){
+    if(bootstrapPromise){ try{ await bootstrapPromise; }catch(_){ } }
+    const s = await getDoc(doc(db,'users',uid));
+    return s.exists() ? s.data() : null;
+  },
+
+  async changePassword(current, next){
+    const u = auth.currentUser;
+    if(!u) throw coded('auth/requires-recent-login');
+    await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, current));
+    await updatePassword(u, next);
+    await updateDoc(doc(db,'users',u.uid), {mustChangePassword:false});
+  },
+
+  /* Données partagées */
+  listenData(cb, errCb){
+    return onSnapshot(doc(db,'pilot','data'), (snap)=>{
+      cb({exists:snap.exists(), payload: snap.exists()? snap.data().payload : null, pending: snap.metadata.hasPendingWrites, fromCache: snap.metadata.fromCache});
+    }, errCb);
+  },
+  saveData(payload){
+    return setDoc(doc(db,'pilot','data'), {payload, updatedAt: serverTimestamp(), updatedBy: auth.currentUser ? auth.currentUser.uid : null});
+  },
+
+  /* Gestion des comptes (administrateur) */
+  async listUsers(){
+    const snap = await getDocs(collection(db,'users'));
+    return snap.docs.map(d=>({uid:d.id, ...d.data()}));
+  },
+  async createUser({username, displayName, role, password}){
+    const email = toEmail(username);
+    // Application secondaire : évite de déconnecter l'administrateur en créant le compte.
+    const sec = getApps().find(a=>a.name==='secondary') || initializeApp(firebaseConfig,'secondary');
+    const secAuth = getAuth(sec);
+    const cred = await createUserWithEmailAndPassword(secAuth, email, password);
+    const uid = cred.user.uid;
+    await signOut(secAuth);
+    await setDoc(doc(db,'users',uid), {username, email, displayName, role, active:true, mustChangePassword:true, createdAt: serverTimestamp(), createdBy: auth.currentUser.uid});
+  },
+  updateUser: (uid, fields)=> updateDoc(doc(db,'users',uid), fields),
+  sendReset: (email)=> sendPasswordResetEmail(auth, email),
+};
+
+if(window.pilotMain) window.pilotMain();
 </script>
 </body>
 </html>
