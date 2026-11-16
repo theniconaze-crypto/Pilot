@@ -720,7 +720,7 @@ function normalizeData(d){
 function normalizeDocs(a){
   return (Array.isArray(a)?a:[]).filter(d=>d && d.id && d.projectId).map(d=>({
     id:d.id, projectId:d.projectId, phaseId:d.phaseId||null,
-    name:String(d.name||'Document'), kind:d.kind==='link'?'link':'file',
+    name:String(d.name||'Document'), kind:(d.kind==='link'||d.kind==='local')?d.kind:'file',
     url:String(d.url||''), path:d.path||'', size:Number(d.size)||0, mime:d.mime||'',
     addedAt:d.addedAt||'', addedBy:d.addedBy||''
   }));
@@ -1246,7 +1246,10 @@ function renderSidebar(){
       const phaseIds = state.phases.filter(p=>p.projectId===pid).map(p=>p.id);
       state.phases = state.phases.filter(p=>p.projectId!==pid);
       state.risks = state.risks.filter(r=>!phaseIds.includes(r.phaseId));
-      state.docs.filter(d=>d.projectId===pid && d.path).forEach(d=>{ window.PilotFB.deleteFile(d.path).catch(e=>console.warn('Suppression fichier', e)); });
+      state.docs.filter(d=>d.projectId===pid).forEach(d=>{
+        if(d.kind==='local') LocalFiles.del(d.id).catch(e=>console.warn('Suppression locale', e));
+        else if(d.path) window.PilotFB.deleteFile(d.path).catch(e=>console.warn('Suppression fichier', e));
+      });
       state.docs = state.docs.filter(d=>d.projectId!==pid);
       state.projects = state.projects.filter(p=>p.id!==pid);
       if(state.ui.selectedProject===pid) state.ui.selectedProject='all';
@@ -1792,6 +1795,48 @@ function openModal2(html){
 }
 function closeModal2(){ document.getElementById('modalRoot2').innerHTML=''; }
 
+/* ---- Stockage local des fichiers (IndexedDB) : les fichiers restent sur CET appareil ---- */
+const LocalFiles = (function(){
+  let dbp = null;
+  function open(){
+    if(dbp) return dbp;
+    dbp = new Promise((resolve, reject)=>{
+      if(!window.indexedDB){ reject(new Error('IndexedDB indisponible')); return; }
+      const rq = indexedDB.open('pilot-local-files', 1);
+      rq.onupgradeneeded = ()=>{ rq.result.createObjectStore('files'); };
+      rq.onsuccess = ()=>resolve(rq.result);
+      rq.onerror = ()=>{ dbp = null; reject(rq.error); };
+    });
+    return dbp;
+  }
+  function tx(mode, fn){
+    return open().then(db=>new Promise((resolve, reject)=>{
+      const t = db.transaction('files', mode);
+      const r = fn(t.objectStore('files'));
+      t.oncomplete = ()=>resolve(r && r.result);
+      t.onerror = ()=>reject(t.error);
+      t.onabort = ()=>reject(t.error || new Error('Écriture annulée'));
+    }));
+  }
+  return {
+    put:(id, blob)=>tx('readwrite', s=>s.put(blob, id)),
+    get:(id)=>tx('readonly', s=>s.get(id)),
+    del:(id)=>tx('readwrite', s=>s.delete(id)),
+  };
+})();
+async function openLocalDoc(id){
+  const d = state.docs.find(x=>x.id===id);
+  try{
+    const blob = await LocalFiles.get(id);
+    if(!blob){ showToast(`Fichier absent de cet appareil${d&&d.addedBy?` (ajouté par ${d.addedBy})`:''}`, 4500); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.target = '_blank'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }catch(e){ console.error(e); showToast("Impossible d'ouvrir le fichier local"); }
+}
+
 function safeUrl(u){ try{ const x=new URL(String(u||'').trim()); return (x.protocol==='http:'||x.protocol==='https:')?x.href:''; }catch(e){ return ''; } }
 function normalizeUrlInput(s){ s=String(s||'').trim(); if(!s) return ''; if(!/^[a-z][a-z0-9+.-]*:/i.test(s)) s='https://'+s; return safeUrl(s); }
 function fmtSize(b){ if(!b) return ''; if(b<1024) return b+' o'; if(b<1048576) return Math.round(b/1024)+' Ko'; return (b/1048576).toFixed(b<10485760?1:0)+' Mo'; }
@@ -1811,6 +1856,7 @@ function storageErrorMessage(e){
   if(c==='storage/unauthorized') return "Envoi refusé : vérifiez les règles de Firebase Storage.";
   if(c==='storage/unauthenticated') return 'Session expirée : reconnectez-vous.';
   if(c==='storage/quota-exceeded') return 'Quota Firebase Storage dépassé.';
+  if(c==='pilot/upload-stalled' || c==='storage/canceled') return "L'envoi est bloqué (aucune progression). Vérifiez dans Firebase : Storage activé (plan Blaze requis) et règles publiées pour les utilisateurs connectés.";
   if(c==='storage/retry-limit-exceeded' || c==='storage/network-request-failed') return 'Réseau indisponible : envoi interrompu.';
   if(c==='storage/bucket-not-found' || c==='storage/project-not-found') return "Firebase Storage n'est pas activé pour ce projet.";
   return "Échec de l'envoi du document.";
@@ -1824,10 +1870,13 @@ function docRowHtml(d, opts){
   const meta = [];
   if(opts.showProject){ const pr=projectById(d.projectId); if(pr) meta.push(`<span><span class="proj-dot" style="display:inline-block;background:${pr.color};margin-right:5px"></span>${escapeHtml(pr.name)}</span>`); }
   if(opts.showScope!==false) meta.push(ph ? `<span class="doc-tag">Phase · ${escapeHtml(ph.name)}</span>` : `<span class="doc-tag">Projet</span>`);
-  if(d.kind==='file' && d.size) meta.push(`<span>${fmtSize(d.size)}</span>`);
+  if(d.kind!=='link' && d.size) meta.push(`<span>${fmtSize(d.size)}</span>`);
+  if(d.kind==='local') meta.push(`<span class="doc-tag" title="Fichier enregistré sur l'appareil qui l'a ajouté">📍 Local</span>`);
   const dt = fmtDocDate(d.addedAt);
   if(dt) meta.push(`<span>${dt}${d.addedBy?' · '+escapeHtml(d.addedBy):''}</span>`);
-  const nameHtml = url
+  const nameHtml = d.kind==='local'
+    ? `<a class="doc-name" href="#" data-openlocal="${d.id}" title="${escapeHtml(d.name)}">${escapeHtml(d.name)}</a>`
+    : url
     ? `<a class="doc-name" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(d.name)}">${escapeHtml(d.name)}</a>`
     : `<span class="doc-name">${escapeHtml(d.name)}</span>`;
   const openIco = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/></svg>`;
@@ -1837,6 +1886,7 @@ function docRowHtml(d, opts){
     <div class="doc-ico ${ic.cls}">${escapeHtml(ic.txt)}</div>
     <div class="doc-main">${nameHtml}<div class="doc-meta">${meta.join('')}</div></div>
     <div class="doc-actions">
+      ${d.kind==='local'?`<a class="doc-act" href="#" data-openlocal="${d.id}" title="Ouvrir">${openIco}</a>`:''}
       ${url?`<a class="doc-act" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="Ouvrir">${openIco}</a>`:''}
       ${canEdit()?`<button type="button" class="doc-act" data-editdoc="${d.id}" title="Modifier / réassocier">${editIco}</button><button type="button" class="doc-act danger" data-deldoc="${d.id}" title="Supprimer">${delIco}</button>`:''}
     </div>
@@ -1847,8 +1897,9 @@ function deleteDoc(id){
   if(!canEdit()) return false;
   const d = state.docs.find(x=>x.id===id);
   if(!d) return false;
-  if(!confirm(`Supprimer « ${d.name} » ?${d.kind==='file'?' Le fichier sera aussi supprimé du stockage.':''}`)) return false;
+  if(!confirm(`Supprimer « ${d.name} » ?${d.kind!=='link'?' Le fichier sera aussi supprimé du stockage.':''}`)) return false;
   state.docs = state.docs.filter(x=>x.id!==id);
+  if(d.kind==='local') LocalFiles.del(d.id).catch(e=>console.warn('Suppression locale', e));
   if(d.path) window.PilotFB.deleteFile(d.path).catch(e=>console.warn('Suppression fichier', e));
   persist();
   showToast('Document supprimé');
@@ -1856,6 +1907,7 @@ function deleteDoc(id){
 }
 
 function bindDocActions(root, onChange){
+  root.querySelectorAll('[data-openlocal]').forEach(a=>a.addEventListener('click', (e)=>{ e.preventDefault(); openLocalDoc(a.dataset.openlocal); }));
   root.querySelectorAll('[data-deldoc]').forEach(b=>b.addEventListener('click', ()=>{
     if(deleteDoc(b.dataset.deldoc)){ if(onChange) onChange(); renderAll(); }
   }));
@@ -1900,7 +1952,7 @@ function openDocModal(opts){
           <div class="seg" id="d_mode"><button type="button" data-mode="file" class="on">Fichier</button><button type="button" data-mode="link">Lien web</button></div></div>`}
         <div class="field full ${editing?'hidden':''}" id="d_fileWrap"><label>Fichier(s)</label>
           <input type="file" id="d_file" multiple>
-          <div class="hint">25 Mo maximum par fichier. Plusieurs fichiers possibles d'un coup.</div></div>
+          <div class="hint">25 Mo maximum par fichier. Les fichiers sont enregistrés sur cet appareil uniquement : les autres utilisateurs voient le document dans la liste mais ne peuvent pas l'ouvrir. Pour partager, utilisez « Lien web ».</div></div>
         <div class="field full hidden" id="d_urlWrap"><label>Adresse du lien</label>
           <input id="d_url" inputmode="url" autocapitalize="none" spellcheck="false" placeholder="https://… (SharePoint, Drive, GED…)" value="${cur&&cur.kind==='link'?escapeHtml(cur.url):''}"></div>
         <div class="field full"><label>Nom affiché</label>
@@ -1978,14 +2030,15 @@ function openDocModal(opts){
       try{
         $('d_progressLabel').textContent = `Envoi ${i+1}/${files.length} — ${f.name}`;
         $('d_progressBar').style.width = '0%';
-        const path = `pilot-docs/${pid}/${uid()}-${safeFileName(f.name)}`;
-        const res = await window.PilotFB.uploadFile(path, f, pct=>{ const bar=document.getElementById('d_progressBar'); if(bar) bar.style.width = pct+'%'; });
+        const id = uid();
+        await LocalFiles.put(id, f);   // enregistré sur cet appareil (IndexedDB)
+        $('d_progressBar').style.width = '100%';
         if(!state) return;
-        state.docs.push({id:uid(), projectId:pid, phaseId:phid, name:(files.length===1&&nameInput)?nameInput:f.name, kind:'file', url:res.url, path, size:f.size, mime:f.type||'', addedAt:new Date().toISOString(), addedBy:who});
+        state.docs.push({id, projectId:pid, phaseId:phid, name:(files.length===1&&nameInput)?nameInput:f.name, kind:'local', url:'', path:'', size:f.size, mime:f.type||(/\.pdf$/i.test(f.name)?'application/pdf':''), addedAt:new Date().toISOString(), addedBy:who});
         ok++;
       }catch(e){
-        console.error('Upload error', e);
-        showToast(storageErrorMessage(e), 6000);
+        console.error('Local save error', e);
+        showToast("Enregistrement local impossible (navigation privée ou stockage plein ?)", 6000);
         break;
       }
     }
@@ -2675,7 +2728,11 @@ let storageApi = null;
 async function getStorageApi(){
   if(!storageApi){
     const m = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js");
-    storageApi = {m, s: m.getStorage(app)};
+    const s = m.getStorage(app);
+    /* Par défaut le SDK réessaie pendant 10 min (maxUploadRetryTime) avant d'échouer :
+       l'app semblait "figée". On limite à 30 s pour obtenir une vraie erreur. */
+    try{ s.maxUploadRetryTime = 30000; s.maxOperationRetryTime = 30000; }catch(_){}
+    storageApi = {m, s};
   }
   return storageApi;
 }
@@ -2726,11 +2783,22 @@ window.PilotFB = {
   async uploadFile(path, file, onProgress){
     const {m, s} = await getStorageApi();
     return new Promise((resolve, reject)=>{
-      const task = m.uploadBytesResumable(m.ref(s, path), file, file.type ? {contentType:file.type} : undefined);
+      const meta = {contentType: file.type || (/\.pdf$/i.test(file.name||'') ? 'application/pdf' : 'application/octet-stream')};
+      const task = m.uploadBytesResumable(m.ref(s, path), file, meta);
+      let done = false, lastBytes = -1;
+      const finish = (fn, v)=>{ if(done) return; done = true; clearInterval(watch); fn(v); };
+      /* Garde-fou : si plus aucun octet n'avance pendant 25 s, on annule et on remonte une erreur claire. */
+      let idle = 0;
+      const watch = setInterval(()=>{
+        const b = task.snapshot ? task.snapshot.bytesTransferred : 0;
+        if(b!==lastBytes){ lastBytes = b; idle = 0; return; }
+        idle += 5;
+        if(idle>=25){ try{ task.cancel(); }catch(_){} finish(reject, Object.assign(new Error('Upload stalled'), {code:'pilot/upload-stalled'})); }
+      }, 5000);
       task.on('state_changed',
         snap=>{ if(onProgress && snap.totalBytes) onProgress(Math.round(100*snap.bytesTransferred/snap.totalBytes)); },
-        reject,
-        async ()=>{ try{ resolve({url: await m.getDownloadURL(task.snapshot.ref)}); }catch(e){ reject(e); } });
+        err=>finish(reject, err),
+        async ()=>{ try{ const url = await m.getDownloadURL(task.snapshot.ref); finish(resolve, {url}); }catch(e){ finish(reject, e); } });
     });
   },
   async deleteFile(path){
