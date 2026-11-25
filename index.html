@@ -71,7 +71,18 @@ input,select,textarea{font-family:inherit;color:var(--text-1);}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
 /* ---------- LAYOUT ---------- */
-#app{display:grid;grid-template-columns:250px 1fr;height:100vh;height:100dvh;}
+#app{display:grid;grid-template-columns:var(--sidebar-w,250px) 1fr;height:100vh;height:100dvh;position:relative;}
+/* Poignée de redimensionnement de la colonne de gauche (bureau uniquement) */
+#sidebarResizer{
+  position:absolute;top:0;bottom:0;left:calc(var(--sidebar-w,250px) - 3px);width:7px;
+  cursor:col-resize;z-index:40;touch-action:none;
+}
+#sidebarResizer::after{
+  content:'';position:absolute;top:0;bottom:0;left:3px;width:2px;background:transparent;transition:background .15s;
+}
+#sidebarResizer:hover::after,#sidebarResizer.dragging::after{background:var(--accent);}
+body.sidebar-resizing{cursor:col-resize;user-select:none;-webkit-user-select:none;}
+body.sidebar-resizing #sidebar,body.sidebar-resizing #main{pointer-events:none;}
 .menu-toggle{display:none;}
 #sidebarBackdrop{display:none;}
 
@@ -363,6 +374,7 @@ table.data-table tr:last-child td{border-bottom:none;}
 
 @media (max-width:900px){
   #app{grid-template-columns:1fr;}
+  #sidebarResizer{display:none;}
 
   /* Sidebar becomes an off-canvas drawer instead of vanishing */
   #sidebar{
@@ -551,6 +563,7 @@ a.doc-name:hover{color:var(--accent);}
   </aside>
 
   <div id="sidebarBackdrop"></div>
+  <div id="sidebarResizer" role="separator" aria-orientation="vertical" aria-label="Redimensionner le menu (double-clic pour réinitialiser)" title="Glisser pour redimensionner — double-clic pour réinitialiser"></div>
 
   <main id="main">
     <div id="topbar">
@@ -2657,7 +2670,51 @@ function setupEvents(){
   });
 }
 
+/* ---------------------------- SIDEBAR RESIZE ---------------------------- */
+const SIDEBAR_KEY = 'pilot-sidebar-w';
+const SIDEBAR_MIN = 200, SIDEBAR_MAX = 520, SIDEBAR_DEFAULT = 250;
+function setSidebarWidth(w, save){
+  w = Math.round(clamp(w, SIDEBAR_MIN, SIDEBAR_MAX));
+  document.getElementById('app').style.setProperty('--sidebar-w', w+'px');
+  if(save){ try{ window.localStorage.setItem(SIDEBAR_KEY, String(w)); }catch(e){} }
+  return w;
+}
+function initSidebarResize(){
+  const handle = document.getElementById('sidebarResizer');
+  if(!handle) return;
+  try{ const v = Number(window.localStorage.getItem(SIDEBAR_KEY)); if(v) setSidebarWidth(v, false); }catch(e){}
+  let startX = 0, startW = 0;
+  const onMove = (e)=>{ setSidebarWidth(startW + (e.clientX - startX), false); };
+  const onUp = (e)=>{
+    handle.classList.remove('dragging'); document.body.classList.remove('sidebar-resizing');
+    handle.removeEventListener('pointermove', onMove);
+    handle.removeEventListener('pointerup', onUp);
+    handle.removeEventListener('pointercancel', onUp);
+    try{ handle.releasePointerCapture(e.pointerId); }catch(_){}
+    setSidebarWidth(document.getElementById('sidebar').getBoundingClientRect().width, true);
+  };
+  handle.addEventListener('pointerdown', (e)=>{
+    if(e.button!==undefined && e.button!==0) return;
+    e.preventDefault();
+    startX = e.clientX; startW = document.getElementById('sidebar').getBoundingClientRect().width;
+    handle.classList.add('dragging'); document.body.classList.add('sidebar-resizing');
+    try{ handle.setPointerCapture(e.pointerId); }catch(_){}
+    handle.addEventListener('pointermove', onMove);
+    handle.addEventListener('pointerup', onUp);
+    handle.addEventListener('pointercancel', onUp);
+  });
+  handle.addEventListener('dblclick', ()=> setSidebarWidth(SIDEBAR_DEFAULT, true));
+  handle.addEventListener('keydown', (e)=>{
+    if(e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
+    e.preventDefault();
+    const w = document.getElementById('sidebar').getBoundingClientRect().width;
+    setSidebarWidth(w + (e.key==='ArrowRight'?20:-20), true);
+  });
+  handle.tabIndex = 0;
+}
+
 function boot(){
+  initSidebarResize();
   setupAuthEvents();
   showAuthScreen('loading');
   window.PilotFB.onAuth(onAuthChange);
