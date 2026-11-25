@@ -519,7 +519,7 @@ a.doc-name:hover{color:var(--accent);}
       <div class="brand-mark">P</div>
       <div class="brand-text">
         <div class="t1">PILOT</div>
-        <div class="t2">Pilotage industriel</div>
+        <div class="t2">Pilotage industriel · v9</div>
       </div>
     </div>
 
@@ -582,6 +582,7 @@ a.doc-name:hover{color:var(--accent);}
         </button>
         <input type="file" id="importFileInput" accept="application/json" class="hidden">
       </div>
+      <div class="io-row"><button class="io-btn" id="backupsBtn" title="Sauvegardes automatiques et restauration">Sauvegardes</button></div>
     </div>
   </aside>
 
@@ -612,7 +613,7 @@ a.doc-name:hover{color:var(--accent);}
   <div class="auth-card">
     <div class="brand">
       <div class="brand-mark">P</div>
-      <div class="brand-text"><div class="t1">PILOT</div><div class="t2">Pilotage industriel</div></div>
+      <div class="brand-text"><div class="t1">PILOT</div><div class="t2">Pilotage industriel · v9</div></div>
     </div>
     <div id="authLoading" class="auth-loading">Connexion au serveur…</div>
     <form id="loginForm" class="hidden" autocomplete="on">
@@ -724,6 +725,9 @@ function seedDeps(s){
 /* ---------------------------- SESSION / RÔLES ---------------------------- */
 const ROLE_LABELS = {admin:'Administrateur', manager:'Chef de projet', viewer:'Visionneur'};
 const LEGACY_KEY = 'pilot-pm-data';
+const APP_VERSION = 'v9';
+const DATA_SCHEMA = 2;        // 1 = anciennes versions (sans numéro), 2 = v7+ (événements, numéro de version)
+let dataLocked = false;       // vrai si les données du cloud viennent d'une version plus récente : lecture seule
 let currentUser = null;      // {uid, username, displayName, role, active, mustChangePassword}
 let unsubscribeData = null;
 let lastPayload = null;      // dernière version des données connue du serveur (évite les écho)
@@ -731,7 +735,7 @@ let appStarted = false;
 let pendingAuthMessage = '';
 let authSeq = 0;
 
-function canEdit(){ return !!currentUser && (currentUser.role==='admin' || currentUser.role==='manager'); }
+function canEdit(){ return !!currentUser && !dataLocked && (currentUser.role==='admin' || currentUser.role==='manager'); }
 function isAdmin(){ return !!currentUser && currentUser.role==='admin'; }
 
 /* Préférences d'affichage (projet sélectionné, KPI cochés) : locales, par utilisateur. */
@@ -744,7 +748,16 @@ function loadUi(){
 function saveUi(){ try{ window.localStorage.setItem(uiKey(), JSON.stringify(state.ui)); }catch(e){} }
 
 /* Données partagées (projets, phases, risques) : un document Firestore pilot/data. */
-function dataPayload(){ return JSON.stringify({projects:state.projects, phases:state.phases, risks:state.risks, docs:state.docs, events:state.events}); }
+function dataPayload(){
+  /* Les champs inconnus (ajoutés par une version plus récente) sont conservés tels quels. */
+  return JSON.stringify(Object.assign({}, state.extra||{}, {v:DATA_SCHEMA, projects:state.projects, phases:state.phases, risks:state.risks, docs:state.docs, events:state.events}));
+}
+function extraOf(raw){
+  const known = ['projects','phases','risks','docs','events','v'];
+  const x = {};
+  Object.keys(raw||{}).forEach(k=>{ if(!known.includes(k)) x[k] = raw[k]; });
+  return x;
+}
 function normalizeData(d){
   return {
     projects: Array.isArray(d.projects)?d.projects:[],
@@ -776,6 +789,7 @@ function persist(){
   if(!canEdit()) return;
   const payload = dataPayload();
   if(payload===lastPayload) return;
+  backupBeforeSave(lastPayload, payload);
   lastPayload = payload;
   setSaveState('pending','Enregistrement…');
   window.PilotFB.saveData(payload).then(()=>{
@@ -807,13 +821,37 @@ function applyRemoteData(r){
   }
   if(r.pending) return;                 // écho de notre propre écriture en cours
   if(r.payload===lastPayload) return;   // écho de notre écriture confirmée
+  let healed = false;
   try{
-    const d = normalizeData(JSON.parse(r.payload));
+    const raw = JSON.parse(r.payload);
+    const schema = Number(raw.v) || 1;
+    const d = normalizeData(raw);
+    if(schema > DATA_SCHEMA){
+      dataLocked = true;   // données écrites par une version plus récente : on lit, on n'écrit plus
+    } else if(schema < DATA_SCHEMA && raw.events===undefined && state.events.length){
+      /* Une version plus ancienne de l'outil vient de réécrire les données sans connaître les événements :
+         on les conserve (ainsi que le rattachement des documents) et on réécrit une version complète. */
+      const prevEv = new Map(state.docs.map(x=>[x.id, x.eventId]));
+      d.docs.forEach(x=>{ if(!x.eventId && prevEv.get(x.id)) x.eventId = prevEv.get(x.id); });
+      d.events = state.events;
+      healed = true;
+    }
     state.projects = d.projects; state.phases = d.phases; state.risks = d.risks; state.docs = d.docs; state.events = d.events;
+    state.extra = extraOf(raw);
     lastPayload = r.payload;
   }catch(e){ console.error('Données distantes illisibles', e); return; }
+  if(dataLocked){
+    setSaveState('error','Lecture seule : version trop ancienne');
+    showToast("Les données viennent d'une version plus récente de l'outil : lecture seule. Rechargez la page.", 8000);
+    applyRoleUi(); renderAll();
+    return;
+  }
   setSaveState('ok','Synchronisé');
   renderAll();
+  if(healed){
+    showToast("Une ancienne version de l'outil a réécrit les données : les événements ont été rétablis.", 8000);
+    persist();
+  }
 }
 
 /* ---------------------------- AUTHENTIFICATION ---------------------------- */
@@ -858,7 +896,7 @@ async function onAuthChange(fbUser){
   const seq = ++authSeq;
   if(!fbUser){
     if(unsubscribeData){ unsubscribeData(); unsubscribeData=null; }
-    currentUser = null; state = null; lastPayload = null;
+    currentUser = null; state = null; lastPayload = null; dataLocked = false;
     closeModal(); closeSidebar();
     const msg = pendingAuthMessage; pendingAuthMessage='';
     showAuthScreen('login', msg);
@@ -884,6 +922,7 @@ function applyRoleUi(){
   document.getElementById('navUsers').classList.toggle('hidden', !isAdmin());
   document.getElementById('addProjectBtn').classList.toggle('hidden', !canEdit());
   document.getElementById('importJsonBtn').classList.toggle('hidden', !canEdit());
+  document.getElementById('backupsBtn').classList.toggle('hidden', !canEdit());
   const name = currentUser.displayName || currentUser.username || '?';
   document.getElementById('userName').textContent = name;
   document.getElementById('userRole').textContent = ROLE_LABELS[currentUser.role] || currentUser.role;
@@ -892,7 +931,7 @@ function applyRoleUi(){
 }
 
 async function enterApp(){
-  state = {projects:[], phases:[], risks:[], docs:[], events:[], ui:loadUi()};
+  state = {projects:[], phases:[], risks:[], docs:[], events:[], extra:{}, ui:loadUi()};
   lastPayload = null;
   hideAuthScreen();
   applyRoleUi();
@@ -2525,6 +2564,125 @@ function openEventModal(eventId){
   });
 }
 
+/* ---------------------------- SAUVEGARDES ---------------------------- */
+const LOCAL_BK_KEY = 'pilot-backups';
+let lastBackupAt = 0, lastShrinkBackupAt = 0, backupWarned = false;
+
+function payloadCounts(str){
+  try{
+    const o = JSON.parse(str); const n = k=> Array.isArray(o[k]) ? o[k].length : 0;
+    return {projects:n('projects'), phases:n('phases'), risks:n('risks'), docs:n('docs'), events:n('events')};
+  }catch(e){ return null; }
+}
+function isShrink(prev, next){
+  const a = payloadCounts(prev), b = payloadCounts(next);
+  if(!a || !b) return false;
+  return Object.keys(a).some(k=> b[k] < a[k]);
+}
+function readLocalBackups(){
+  try{ const a = JSON.parse(window.localStorage.getItem(LOCAL_BK_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; }
+}
+function pushLocalBackup(entry){
+  try{
+    let list = readLocalBackups();
+    if(list[0] && list[0].payload===entry.payload) return;
+    list = [entry, ...list].slice(0,8);
+    let total = 0; const kept = [];
+    for(const it of list){ total += String(it.payload||'').length; if(total>1500000 && kept.length) break; kept.push(it); }
+    window.localStorage.setItem(LOCAL_BK_KEY, JSON.stringify(kept));
+  }catch(e){ console.warn('Sauvegarde locale impossible', e); }
+}
+async function makeBackup(payload, reason){
+  if(!payload || !currentUser) return null;
+  const entry = {id:uid(), at:new Date().toISOString(), by:currentUser.displayName||currentUser.username||'', reason, payload};
+  lastBackupAt = Date.now();
+  pushLocalBackup(entry);
+  try{ await window.PilotFB.addBackup(entry); }
+  catch(e){
+    console.warn('Sauvegarde cloud impossible', e);
+    if(!backupWarned){ backupWarned = true; showToast('Sauvegarde cloud impossible (règles Firestore ?) : copie locale uniquement', 6500); }
+  }
+  return entry;
+}
+/* Copie de l'état actuel du cloud AVANT de l'écraser : si on perd du contenu (suppression), tout de suite ;
+   sinon au plus une fois toutes les 15 minutes. */
+function backupBeforeSave(prev, next){
+  if(!prev) return;
+  const shrink = isShrink(prev, next);
+  const now = Date.now();
+  if(shrink && now - lastShrinkBackupAt > 60000){ lastShrinkBackupAt = now; makeBackup(prev, 'avant suppression'); }
+  else if(!shrink && now - lastBackupAt > 15*60*1000){ makeBackup(prev, 'automatique'); }
+}
+
+async function openBackupsModal(){
+  if(!canEdit()){ showToast('Action réservée aux chefs de projet'); return; }
+  openModal(`
+  <div class="modal wide">
+    <div class="modal-head"><h3>Sauvegardes</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:12px">Une copie des données est conservée automatiquement avant chaque suppression et toutes les 15 minutes de modification. « Cloud » : visible par tous les chefs de projet ; « Cet appareil » : copie locale. Restaurer remplace le contenu actuel (une sauvegarde de l'état actuel est faite avant).</div>
+      <div class="mini-list" id="bkList"><div class="hint">Chargement…</div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline modal-close">Fermer</button>
+      <button class="btn btn-outline" id="btnBkNow">Sauvegarder maintenant</button>
+    </div>
+  </div>`);
+  const $ = (id)=>document.getElementById(id);
+  const render = async ()=>{
+    if(!$('bkList')) return;
+    $('bkList').innerHTML = '<div class="hint">Chargement…</div>';
+    let cloud = [], cloudErr = false;
+    try{ cloud = await window.PilotFB.listBackups(); }catch(e){ cloudErr = true; console.warn('Lecture sauvegardes cloud', e); }
+    if(!$('bkList')) return;
+    const byId = new Map();
+    cloud.forEach((b,i)=>byId.set(b.id||('c'+i), Object.assign({}, b, {src:'Cloud'})));
+    readLocalBackups().forEach((b,i)=>{ const k=b.id||('l'+i); if(!byId.has(k)) byId.set(k, Object.assign({}, b, {src:'Cet appareil'})); });
+    const all = [...byId.values()].sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+    $('bkList').innerHTML = (cloudErr ? '<div class="hint" style="color:#ffc266">Sauvegardes cloud illisibles (règles Firestore ?). Seules les copies de cet appareil sont affichées.</div>' : '') +
+      (all.length ? all.map((b,i)=>{
+        const c = payloadCounts(b.payload) || {projects:'?',phases:'?',risks:'?',docs:'?',events:'?'};
+        return `<div class="mini-item"><div class="body">
+          <strong>${escapeHtml(fmtDateTime(b.at))}</strong> <span class="badge" style="background:var(--bg-raised);color:var(--text-2)">${escapeHtml(b.reason||'')}</span> <span class="badge" style="background:var(--bg-raised);color:var(--text-3)">${escapeHtml(b.src)}</span>
+          <div class="hint" style="margin-top:3px">${c.projects} projet(s) · ${c.phases} phase(s) · ${c.risks} risque(s) · ${c.events} événement(s) · ${c.docs} document(s)${b.by?' · '+escapeHtml(b.by):''}</div></div>
+          <div style="display:flex;gap:6px;flex:none">
+            <button type="button" class="btn btn-outline btn-sm" data-bkdl="${i}">Télécharger</button>
+            <button type="button" class="btn btn-primary btn-sm" data-bkrestore="${i}">Restaurer</button>
+          </div></div>`;
+      }).join('') : '<div class="hint">Aucune sauvegarde pour le moment.</div>');
+    $('bkList').querySelectorAll('[data-bkdl]').forEach(btn=>btn.addEventListener('click', ()=>{
+      const b = all[Number(btn.dataset.bkdl)]; if(!b) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([b.payload], {type:'application/json'}));
+      a.download = `pilot-sauvegarde-${String(b.at).slice(0,16).replace(/[:T]/g,'-')}.json`;
+      a.click();
+    }));
+    $('bkList').querySelectorAll('[data-bkrestore]').forEach(btn=>btn.addEventListener('click', async ()=>{
+      const b = all[Number(btn.dataset.bkrestore)]; if(!b || !canEdit()) return;
+      if(!confirm(`Restaurer la sauvegarde du ${fmtDateTime(b.at)} ? Le contenu actuel sera remplacé.`)) return;
+      try{
+        const raw = JSON.parse(b.payload);
+        if(!raw.projects || !raw.phases) throw new Error('format invalide');
+        await makeBackup(dataPayload(), 'avant restauration');
+        const d = normalizeData(raw);
+        state.projects = d.projects; state.phases = d.phases; state.risks = d.risks; state.docs = d.docs; state.events = d.events;
+        state.extra = extraOf(raw);
+        state.ui.selectedProject = 'all';
+        persist(); closeModal(); renderAll();
+        showToast('Sauvegarde restaurée');
+      }catch(e){ console.error(e); showToast('Sauvegarde illisible : restauration impossible'); }
+    }));
+  };
+  $('btnBkNow').addEventListener('click', async ()=>{
+    $('btnBkNow').disabled = true;
+    await makeBackup(dataPayload(), 'manuelle');
+    $('btnBkNow').disabled = false;
+    showToast('Sauvegarde effectuée');
+    render();
+  });
+  render();
+}
+
 /* ---------------------------- RISK MODAL ---------------------------- */
 function openRiskModal(riskId){
   const editing = !!riskId;
@@ -2870,6 +3028,10 @@ function renderAll(){
     else if(currentTab==='docs') renderDocsTab();
     else if(currentTab==='events') renderEventsTab();
     else if(currentTab==='users') renderUsersTab();
+    if(dataLocked){
+      const padL = document.getElementById('contentPad');
+      if(padL) padL.insertAdjacentHTML('afterbegin', `<div class="alert-chip late" style="white-space:normal;margin-bottom:14px">🔒 Lecture seule : les données du cloud ont été enregistrées par une version plus récente de l'outil que celle-ci (${APP_VERSION}). Rechargez la page ou ouvrez la dernière version pour éviter d'écraser des informations.</div>`);
+    }
     if(!canEdit()) ['btnNewPhaseTop','btnNewPhaseTop2','btnNewRisk'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('hidden'); });
   }catch(err){
     console.error('Render error:', err);
@@ -2908,6 +3070,7 @@ function setupEvents(){
     b.addEventListener('click', ()=>{ currentTab=b.dataset.tab; renderAll(); closeSidebar(); });
   });
   document.getElementById('addProjectBtn').addEventListener('click', ()=>openProjectModal());
+  document.getElementById('backupsBtn').addEventListener('click', ()=>openBackupsModal());
   // Boutons du bandeau projet (délégation : le contenu de la page est régénéré à chaque rendu)
   document.getElementById('contentPad').addEventListener('click', (e)=>{
     const b = e.target.closest('[data-pbaction]'); if(!b || !state) return;
@@ -2918,7 +3081,7 @@ function setupEvents(){
   document.getElementById('logoutBtn').addEventListener('click', ()=>{ closeSidebar(); window.PilotFB.logout(); });
   document.getElementById('accountBtn').addEventListener('click', ()=>{ closeSidebar(); openPasswordModal(); });
   document.getElementById('exportJsonBtn').addEventListener('click', ()=>{
-    const blob = new Blob([JSON.stringify({projects:state.projects, phases:state.phases, risks:state.risks, docs:state.docs, events:state.events},null,2)], {type:'application/json'});
+    const blob = new Blob([JSON.stringify({v:DATA_SCHEMA, projects:state.projects, phases:state.phases, risks:state.risks, docs:state.docs, events:state.events},null,2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `pilot-data-${fmtDate(new Date())}.json`;
@@ -3007,7 +3170,7 @@ setTimeout(()=>{
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updatePassword, sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, writeBatch, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMrQ0NghnyWHiCz-UAW5jO3t5KzfB7FKo",
@@ -3154,6 +3317,24 @@ window.PilotFB = {
     const uid = cred.user.uid;
     await signOut(secAuth);
     await setDoc(doc(db,'users',uid), {username, email, displayName, role, active:true, mustChangePassword:true, createdAt: serverTimestamp(), createdBy: auth.currentUser.uid});
+  },
+  /* Sauvegardes : un seul document pilot/backups contenant les dernières copies (plafonné à ~700 Ko). */
+  async addBackup(entry){
+    if(String(entry.payload||'').length > 700000) throw coded('pilot/backup-too-large');
+    const ref = doc(db,'pilot','backups');
+    await runTransaction(db, async (tx)=>{
+      const snap = await tx.get(ref);
+      let items = (snap.exists() && Array.isArray(snap.data().items)) ? snap.data().items : [];
+      if(items[0] && items[0].payload===entry.payload) return;
+      items = [entry, ...items].slice(0,20);
+      let total = 0; const kept = [];
+      for(const it of items){ total += String(it.payload||'').length; if(total>700000 && kept.length) break; kept.push(it); }
+      tx.set(ref, {items:kept, updatedAt: serverTimestamp()});
+    });
+  },
+  async listBackups(){
+    const s = await getDoc(doc(db,'pilot','backups'));
+    return (s.exists() && Array.isArray(s.data().items)) ? s.data().items : [];
   },
   updateUser: (uid, fields)=> updateDoc(doc(db,'users',uid), fields),
   sendReset: (email)=> sendPasswordResetEmail(auth, email),
